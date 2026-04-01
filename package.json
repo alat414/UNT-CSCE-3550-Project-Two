@@ -1,0 +1,70 @@
+{
+  "name": "projectone",
+  "version": "1.0.0",
+  "description": "test",
+  "keywords": [
+    "jwks"
+  ],
+  "homepage": "https://github.com/alat414/UNT-CSCE-3550-Project-One#readme",
+  "bugs": {
+    "url": "https://github.com/alat414/UNT-CSCE-3550-Project-One/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alat414/UNT-CSCE-3550-Project-One.git"
+  },
+  "license": "UNLICENSED",
+  "author": "gustavo",
+  "type": "commonjs",
+  "main": "keyExpiry.js",
+  "scripts": 
+  {
+    "start": "node keyExpiry.js",
+    "devStart": "nodemon app.js",
+    "devStart2": "nodemon keyExpiry.js",
+    "test": "jest",
+    "test:unit": "jest testing/unit_tests",
+    "test:integration": "jest testing/integration_tests",
+    "test:auth": "jest testing/integration_tests/authentication-flow.tests.js",
+    "test:keys": "jest testing/integration_tests/key-rotation.tests.js",
+    "test:expiry": "jest testing/integration_tests/token-expiry.tests.js",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --maxWorkers=2"
+  },
+  "jest": 
+  {
+    "testTimeout": 30000,
+    "testEnvironment": "node",
+    "testMatch": ["**/testing/**/*.tests.js"],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    },
+    "collectCoverageFrom": [
+      "keyExpiry.js",
+        "keyStorage.js",
+        "app.js",
+        "!**/node_modules/**",
+        "!**/testing/**"
+    ],
+    "coverageReporters": ["text", "html", "lcov"]
+  },
+  "dependencies": 
+  {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": 
+  {
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.11",
+    "supertest": "^7.2.2"
+  }
+  
+}

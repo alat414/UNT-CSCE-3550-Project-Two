@@ -1,0 +1,45 @@
+### Health Check
+GET http://localhost:8080/health
+
+### Checking JWKS endpoint
+GET http://localhost:8080/.well-known/jwks.json
+
+### Check key status
+GET http://localhost:8080/key-status
+
+
+### Authentication
+### 1. Login first - get token and refresh token
+POST http://localhost:8080/login
+Content-Type:  application/json
+
+{
+    "username": "Nanna"
+}
+
+### 2. Obtaining posts with token
+GET http://localhost:8080/posts
+Authorization: Bearer 
+
+### Using refresh token to get a new access token
+POST http://localhost:8080/token
+Content-Type: application/json
+
+{
+    "token": ""
+}
+
+####################
+### Check key status
+GET http://localhost:8080/key-status
+
+### Maintenance
+POST http://localhost:8080/rotate-keys
+Content-Type: application/json
+
+{
+    "expiresInDays": 1
+}
+
+### Debug - Displaying entire key objects
+GET http://localhost:8080/debug-keys
