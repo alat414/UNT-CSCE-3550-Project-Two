@@ -58,16 +58,36 @@ class keyStorage
         const key = this.keys.get(keyID);
         if (!key)
         {
+            console.log(`key ${keyID} not found`);
             return null;
         }
 
-        if (new Date() > key.expiresIn)
+        const now = new Date();
+        if (now > key.expiresIn)
         {
-            this.deactivateKey(keyID);
+            console.log(`Key ${keyID} is expired (expired at {key.expiresIn.toISOString()})`);
+
+            if(key.isActive)
+            {
+                key.isActive = false;
+                console.log(`Deactivated expired key: ${keyID}`);
+
+                if (keyID === this.activeKeyID)
+                {
+                    this.promoteNextKey();
+                }
+            }
+            return null;
+        }
+        
+        if(!key.isActive)
+        {
+            console.log(`Key ${keyID} is inactive`);
             return null;
         }
 
         return key.secret;
+        
     }
 
         /* *************************************************
