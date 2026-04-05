@@ -13,7 +13,7 @@ const port = 8080;
 const jwt = require('jsonwebtoken')
 const keyStorage = require('./keyStorage');
 
-const { authenticateToken, posts } = require('./app.js')
+const { authenticateToken, posts, getUserPosts } = require('./app.js')
 
 const VALID_USERS = ['Nanna', 'nanna', 'Raggi', 'raggi'];
 
@@ -200,7 +200,7 @@ app.get('/posts', authenticateToken, (req, res) =>
 {
     console.log('GET /post - User:' , req.user.name);
 
-    const userPosts = posts.filter(post => post.username === req.user.name);
+    const userPosts = getUserPosts(req.user.name);
 
     res.json(userPosts);
 })
