@@ -67,7 +67,6 @@ app.get('/.well-known/jwks.json', (req, res) =>
         ({
             error: 'Internal Server error'
         });
-
     }
 });
 
