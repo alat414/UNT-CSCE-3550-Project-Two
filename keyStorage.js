@@ -108,15 +108,28 @@ class keyStorage
         return this.getKey(this.activeKeyID);
     }
     /* *************************************************
-    * This function initalizes the server
+    * This function returns the current active key ID
 
     * @param  : none
-    * @return : none
+    * @return keyID: Active key ID, or null.
     * @exception : none
     * @note : na
     * ************************************************* */
     getCurrentKeyID()
     {
+        if (!this.activeKeyID)
+        {
+            return null;
+        }
+
+        const key = this.keys.get(this.activeKeyID);
+        // Validates that the active kid is pointing to a valid key.
+        if (!key || !key.isActive || new Date() > key.expiresIn)
+        {
+            console.log(`Current active key ${this.activeKeyID} is no longer valid`);
+            this.promoteNextKey();
+        }
+
         return this.activeKeyID;
     }
     /* *************************************************
