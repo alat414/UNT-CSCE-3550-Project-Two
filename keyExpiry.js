@@ -1,64 +1,74 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
-*  Assignment: Demonstration Code
-*  Purpose: A demonstration of a properly
-*           constructed and commented functions.cpp
+*  Assignment: JWKS server with SQLite integrated
+*  Purpose: Implementation of the server with key
+*           rotation; keyExpiry.js
 ************************************************* */
 // Authenticate User
 require('dotenv').config()
 
 const express = require('express');
-const app = express();
-const port = 8080;
+
 const jwt = require('jsonwebtoken')
 const keyStorage = require('./keyStorage');
-
 const { authenticateToken, posts, getUserPosts } = require('./app.js')
 
+const app = express();
+const port = 8080;
+
+// Valid Users declared.
 const VALID_USERS = ['Nanna', 'nanna', 'Raggi', 'raggi'];
 
 app.use(express.json())
 
-keyStorage.generateNewKey(10);
+keyStorage.generateNewKey(1);
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
-
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* This function calls the JWKS endpoint. 
+* Only includes active keys, not expired ones. 
+* 
+* @return:  all active public keys 
 * @exception : none
 * @note : na
 * ************************************************* */
 
 app.get('/.well-known/jwks.json', (req, res) => 
 {
-    const jwks = 
+    try
     {
-        keys: []
-    };
-    
-    for (const [kid, keyData] of keyStorage.keys)
-    {
-        if(keyData.isActive && new Date() <= keyData.expiresIn)
+        const jwks = 
         {
-            jwks.keys.push
-            ({
-                kid: kid,
-                kty: "oct",
-                alg: "HS256",
-                use: "sig",
+            keys: []
+        };
+        
 
-                exp: Math.floor(keyData.expiresIn.getTime() / 1000)
-            });
+        for (const [kid, keyData] of keyStorage.keys)
+        {
+            if(keyData.isActive && new Date() <= keyData.expiresIn)
+            {
+                jwks.keys.push
+                ({
+                    kid: kid,
+                    kty: "oct",
+                    alg: "HS256",
+                    use: "sig",
+
+                    exp: Math.floor(keyData.expiresIn.getTime() / 1000)
+                });
+            }
         }
+        console.log(`JWKS endpoint: Returning ${jwks.keys.length} active keys`);
+        res.json(jwks)
     }
-    console.log(` Returning ${jwks.keys.length} active keys`);
-    res.json(jwks);
+    catch(error)
+    {
+        console.log('JWKS endpoint error: ',error);
+        res.status(500).json
+        ({
+            error: 'Internal Server error'
+        });
+
+    }
 });
 
 /* *************************************************
