@@ -386,68 +386,35 @@ app.get('/debug-keys', (req, res) =>
 })
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
+* This function initalizes the server
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
-* @exception : none
-* @note : na
-* ************************************************* */
-function generateToken(user)
-{
-    const currentKey = keyStorage.getCurrentKey();
-    const currentKeyID = keyStorage.getCurrentKeyID();
-
-    return jwt.sign
-    (
-        user,
-        currentKey,
-        {
-            expiresIn: '60s',
-            header: 
-            {
-                kid: currentKeyID,
-                alg: 'HS256'
-            }
-        }
-    );
-}
-
-/* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
-
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* @param  : none
+* @return : none
 * @exception : none
 * @note : na
 * ************************************************* */
 app.listen(port, () => 
 {
-    console.log(`Using authenticateToken from app.js`);
-
     console.log
     (`
+        =====================================================
+        JWKS Server with Key Rotation
+        =====================================================
         KeyExpiry server running at http://localhost:${port}
+
         Available endpoints:
-        - GET /health
-        - GET /.well-known/jwks.json
-        - GET /key-status
-        - POST /login
-        - POST /token
-        - GET /posts
-        - POST /rotate-keys
+        -----------------------------------------------------
+        - GET /.well-known/jwks.json    - Public JWKS endpoint
+        - GET /health                   - Server health check
+        - GET /key-status               - Detailed key information
+        - GET /posts                    - Protected post information(authentication req)
+        - GET /debug-keys               - Debugging key information (dev only)
+
+        - POST /login                   - Authenticate and get tokens
+        - POST /token                   - Refresh access token
+        - POST /rotate-keys             - Rotate keys
     
     `);
 });
 
-module.exports = { app, keyStorage, authenticateToken, posts };
+module.exports = { app, keyStorage };
