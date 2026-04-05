@@ -1,23 +1,18 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
-*  Assignment: Demonstration Code
+*  Assignment: JWKS Server with key id and token authentication.
 *  Purpose: A demonstration of a properly
-*           constructed and commented functions.cpp
+*           constructed and commented app.js
 ************************************************* */
 
 require('dotenv').config()
 
-const express = require('express');
-const app = express();
-const port = 8080;
+
 const jwt = require('jsonwebtoken')
 const keyStorage = require('./keyStorage');
 
-app.use(express.json())
 /* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
+* Post information used for the requests.
 
 * @param sq1 : a square object
 * @param sq2 : a square object
@@ -37,43 +32,7 @@ const posts =
     }
 
 ]
-/* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
 
-* @param sq1 : a square object
-* @param sq2 : a square object
-* @return : na
-* @exception : na
-* @note : na
-* ************************************************* */
-app.get('/posts', authenticateToken, (req, res) => 
-{
-    res.json(posts.filter(post => post.username === req.user.name));
-
-});
-
-/* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
-
-* @param sq1 : a square object
-* @param sq2 : a square object
-* @return : na
-* @exception : na
-* @note : na
-* ************************************************* */
-app.post('/login', (req, res) => 
-{
-    const username = req.body.username
-    const user = { name: username }
-
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s'})
-    res.json({ accessToken: accessToken});
-
-});
 
 /* *************************************************
 * This function accepts two square objects, compares
@@ -91,45 +50,114 @@ function authenticateToken(req, res, next)
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     
-    if (token == null) return res.sendStatus(401);
-
-    const decodedHeader = jwt.decode(token, { complete: true });
-
-    if (!decodedHeader || !decodedHeader.header || !decodedHeader.header.kid)
+    if (!token)
     {
-        return res.status(401).json({ error: 'No key ID in token' });
-    }
-
-    const keyID = decodedHeader.header.kid;
-
-    const signingKey = keyStorage.getKey(keyID);
-
-    if(!signingKey)
-    {
-        return res.status(401).json
-        ({
-            error: 'Key invalid',
-            message: 'Token was signed with invalid key, retry.'
+        console.log('Authentiation failed: No token provided');
+        return res.status(401).json({
+            error: 'Authentication Required',
+            message: 'No token provided in the Authoriztion Header'
         });
     }
-    jwt.verify(token, signingKey, (err, user) => 
+
+    try
     {
-        if (err)
+        const decodedHeader = jwt.decode(token, { complete: true });
+
+        if (!decodedHeader)
         {
-            if (err.name === 'TokenExpiredError')
+            console.log('Authentiation failed: Invalid token format');
+            return res.status(401).json({ 
+                error: 'Invalid token',
+                message: 'Token cannot be decoded' 
+            });
+        }
+
+        if (!decodedHeader.header || !decodedHeader.header.kid)
+        {
+            console.log('Authentiation failed: No key ID in the token header');
+            return res.status(401).json
+            ({ 
+                error: 'Invalid token structure',
+                message: 'Token missing key ID (kid) in header' 
+            });
+        }
+
+        const keyID = decodedHeader.header.kid;
+
+        console.log(`Authenticating token with key ID: ${keyID}`);
+
+        const signingKey = keyStorage.getKey(keyID);
+
+        if(!signingKey)
+        {
+            console.log(`Authenticating token with key ID: ${keyID}`);
+            return res.status(401).json
+            ({
+                error: 'Key invalid',
+                message: 'Token was signed with invalid key, retry.'
+            });
+        }
+        jwt.verify(token, signingKey, (err, user) => 
+        {
+            if (err)
             {
-                return res.status(403).json({ error: 'Token Expired'});
+                if (err.name === 'TokenExpiredError')
+                {
+                    console.log(`Authentication failed: Token expired for key ${keyID}`);
+                    return res.status(403).json
+                    ({ 
+                        error: 'Token Expired',
+                        message: 'Your token has expired. Please login again'
+                    });
+                }
+
+                if (err.name === 'JSONWebTokenError')
+                {
+                    console.log(`Authentication failed: Invalid signature for key ${keyID}`);
+                    return res.status(403).json
+                    ({ 
+                        error: 'Invalid Token',
+                        message: 'Token signature verification failed'
+                    });
+                }
+
+                // Token is valid.
+                console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
+                req.user = user;
+                next();
+
             }
-            return res.status(403).json({ error: 'Invalid Token'});
-
-        } 
-        
-        console.log(`Token is verified for user: ${user.name}`);
-        req.user = user;
-        next();
-    });
-
+        });
+    }
+    catch(error)
+    {
+        console.error('Authentication middleware error failed', error);
+        return res.status(500).json
+        ({ 
+            error: 'Internal Server error',
+            message: 'Error processing authentication'
+        });
+    } 
 }
+
+/* *************************************************
+* This function accepts two square objects, compares
+* them by calling compareSquares() and prints the answer.
+* Since is it a printing function, that is its only job.
+
+* @param sq1 : a square object
+* @param sq2 : a square object
+* @return : na
+* @exception : na
+* @note : na
+* ************************************************* */
+module.exports = 
+{
+    app, 
+    authenticateToken,
+    posts
+}
+
 
 /* *************************************************
 * This function accepts two square objects, compares
