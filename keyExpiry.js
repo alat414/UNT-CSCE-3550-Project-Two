@@ -359,15 +359,12 @@ app.get('/health', (req, res) =>
 });
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
-
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* This function saves key information;
+* intended for development use only. 
+*
+* @param req : request
+* @param res : response
+* @return : none
 * @exception : none
 * @note : na
 * ************************************************* */
@@ -379,7 +376,10 @@ app.get('/debug-keys', (req, res) =>
         rawKeys.push
         ({
             id: id,
-            fullObject: key
+            secretPreview: key.secret.substring(0, 20) + '...',
+            createdAt: key.createdAt,
+            expiresIn: key.expiresIn,
+            isActive: key.isActive
         });
     }
     res.json(rawKeys);
