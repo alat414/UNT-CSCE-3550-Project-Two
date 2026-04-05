@@ -180,10 +180,10 @@ class keyStorage
         this.activeKeyID = this.generateNewKey(1);
     }
     /* *************************************************
-    * This function initalizes the server
+    * This function removes all expired keys from storage
 
     * @param  : none
-    * @return : none
+    * @return count : Number of keys removed
     * @exception : none
     * @note : na
     * ************************************************* */
@@ -192,16 +192,36 @@ class keyStorage
         console.log(` Removing expired keys...`);
         const now = new Date();
         let expiredCount = 0;
+        let activeKeyWasRemoved = false;
+        const keysToRemove = [];
 
         for (const [id, key] of this.keys)
         {
             if (now > key.expiresIn)
             {
-                this.deactivateKey(id);
-                this.keys.delete(id);
-                expiredCount++;
+                keysToRemove.push(id);
+                if (id === this.activeKeyID)
+                {
+                    activeKeyWasRemoved = true;
+                }
             }
         }
+
+        // Removing key
+        for (const id of keysToRemove)
+        {
+            this.keys.delete(id);
+            expiredCount++;
+            console.log(`Removed expired key: ${id}`);
+        }
+
+        // Function ensures the active key was removed and new key was placed
+        if (activeKeyWasRemoved)
+        {
+            console.log('Active key was removed, promoting next available key');
+            this.promoteNextKey();
+        }
+
         console.log(`Removed ${expiredCount} expired keys`);
         return expiredCount;
     }
