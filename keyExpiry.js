@@ -295,35 +295,42 @@ app.post('/rotate-keys', (req, res) =>
 });
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
+* This function gets all the information about the keys.
+* via try-catch method.
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* @param req : request
+* @param res : response
+* @return status : key information
 * @exception : none
 * @note : na
 * ************************************************* */
 app.get('/key-status', (req, res) =>
 {
-    const status = [];
-    for (const [id, key] of keyStorage.keys)
+    try
     {
-        status.push
-            ({
-            kid: id,
-            createdAt: key.createdAt,
-            expiresIn: key.expiresIn,
-            isActive: key.isActive,
-            isCurrent: id === keyStorage.activeKeyID,
-            expired: new Date() > key.expiresIn
+        const status = [];
+        const now = new Date();
 
-        });
+        for (const [id, key] of keyStorage.keys)
+        {
+            status.push
+            ({
+                kid: id,
+                createdAt: key.createdAt,
+                expiresIn: key.expiresIn,
+                isActive: key.isActive,
+                isCurrent: id === keyStorage.activeKeyID,
+                expired: now > key.expiresIn,
+                timeToExpiry: key.expiresIn - now
+            });
+        }
+        res.json(status);
     }
-    res.json(status);
+    catch (error)
+    {
+        console.error('Key status error:', error);
+        res.status(500).json({error: 'Internal server error'});
+    }
 
 });
 
