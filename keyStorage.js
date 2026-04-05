@@ -227,10 +227,10 @@ class keyStorage
     }
 
     /* *************************************************
-    * This function initalizes the server
+    * This function gets all active keys for JWKS endpoint
 
     * @param  : none
-    * @return : none
+    * @return : Array of active key metadata
     * @exception : none
     * @note : na
     * ************************************************* */
@@ -241,14 +241,6 @@ class keyStorage
 
         for (const [id, key] of this.keys)
         {
-            console.log(`Checking key ${id}:`,
-            {
-                isActive: key.isActive,
-                expiresIn: key.expiresIn,
-                isCurrent: id === this.activeKeyID
-            });
-
-
             if(key.isActive && now <= key.expiresIn)
             {
                 activeKeys.push
@@ -261,7 +253,8 @@ class keyStorage
                 });
             }
         }
-        console.log(` Found ${activeKeys.length} active keys for JWKS`);
+
+        console.log(`Found ${activeKeys.length} active keys for JWKS`);
         return activeKeys;
     }   
 }
