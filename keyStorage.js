@@ -133,9 +133,9 @@ class keyStorage
         return this.activeKeyID;
     }
     /* *************************************************
-    * This function initalizes the server
+    * This function disables a specific key.
 
-    * @param  : none
+    * @param  keyID: key ID
     * @return : none
     * @exception : none
     * @note : na
@@ -143,14 +143,15 @@ class keyStorage
     deactivateKey(keyID)
     {
         const key = this.keys.get(keyID);
-        if(key)
+        if(key && key.isActive)
         {
             key.isActive = false;
-            console.log(`Key ${keyID} expired and deactivated`);
+            console.log(`Key ${keyID} deactivated`);
         }
 
         if (keyID === this.activeKeyID)
         {
+            console.log(`Active key ${keyID} was deactivated, promoting new key`);
             this.promoteNextKey();
         }
     }
