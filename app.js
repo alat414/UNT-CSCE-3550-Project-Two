@@ -142,39 +142,27 @@ function authenticateToken(req, res, next)
 }
 
 /* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
+* Helper function to create posts filtered by username
 
-* @param sq1 : a square object
-* @param sq2 : a square object
-* @return : na
-* @exception : na
+* @param username : The username input used for filtering
+* @return : Posts by the user
 * @note : na
 * ************************************************* */
-module.exports = 
+function getUserPosts(username)
 {
-    app, 
-    authenticateToken,
-    posts
+    return posts.filter(post => post.username.toLowerCase() === username.toLowerCase());
 }
 
 
 /* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
+* Export middleware and utilities
 
-* @param sq1 : a square object
-* @param sq2 : a square object
-* @return : na
-* @exception : na
 * @note : na
 * ************************************************* */
 module.exports = 
-{
-    app, 
+{ 
     authenticateToken,
-    posts
+    posts,
+    getUserPosts
 }
 
