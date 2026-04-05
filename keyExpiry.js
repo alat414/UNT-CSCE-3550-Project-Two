@@ -71,15 +71,11 @@ app.get('/.well-known/jwks.json', (req, res) =>
 });
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
+* This function request the refresh token. 
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* @param : request
+* @param : response
+* @return : refresh token
 * @exception : none
 * @note : na
 * ************************************************* */
@@ -89,22 +85,42 @@ app.post('/token', (req, res) =>
 
     if (!refreshToken) 
     {
+        console.log('Token refresh failed: No refresh token provided');
         return res.sendStatus(401)
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if (err)
         {
-            return res.sendStatus(403)
+            console.log('Token refresh failed: Invalid refresh token');
+            return res.status(403).json
+            ({
+                error: 'Invalid refresh token'
+            });
         }   
 
         const currentKey = keyStorage.getCurrentKey();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
-        if(!currentKey)
+        if(!currentKey || !currentKeyID)
         {
-            return res.status(500).json({ error: 'No active key available'});   
+            console.error('Token refresh failed: No active key available');
+            return res.status(500).json
+            ({ 
+                error: 'No active key available'
+            });   
         }
+
+        const keyData = keyStorage.keys.get(currentKeyID);
+        if(!keyData || !keyData.isActive || new Date() > keyData.expiresIn)
+        {
+            console.error('Token refresh failed: Active key is expired');
+            return res.status(500).json
+            ({ 
+                error: 'Active key expired'
+            });   
+        }
+
         const accessToken = jwt.sign
         (
             {
@@ -121,6 +137,7 @@ app.post('/token', (req, res) =>
                 }
             }
         );
+        console.log(`Token refresh successful for user: ${user.name} using key ${currentKeyID}`);
         res.json({ accessToken: accessToken})
     })
 })
