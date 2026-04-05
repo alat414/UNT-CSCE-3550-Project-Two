@@ -202,7 +202,7 @@ app.get('/posts', authenticateToken, (req, res) =>
 
     const userPosts = getUserPosts(req.user.name);
 
-    res.json(userPosts);
+    res.json(userPosts);    
 })
 
 /* *************************************************
