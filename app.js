@@ -14,10 +14,10 @@ const keyStorage = require('./keyStorage');
 /* *************************************************
 * Post information used for the requests.
 
-* @param sq1 : a square object
-* @param sq2 : a square object
-* @return : na
-* @exception : na
+* @param l1 : a created username
+* @param l2 : a created title
+* @param m1 : a created username
+* @param m2 : a created title
 * @note : na
 * ************************************************* */
 const posts = 
@@ -35,14 +35,15 @@ const posts =
 
 
 /* *************************************************
-* This function accepts two square objects, compares
-* them by calling compareSquares() and prints the answer.
-* Since is it a printing function, that is its only job.
+* This function accepts three parameter objects.
+* passes the token and auth header by value into 
+* the declared variables; the function validates the 
+* key ID, and verifies the signature
 
-* @param sq1 : a square object
-* @param sq2 : a square object
+* @param req : value passed by the request call
+* @param res : value passed by the response
+* @param next : value passed by the next function
 * @return : na
-* @exception : na
 * @note : na
 * ************************************************* */
 function authenticateToken(req, res, next)
