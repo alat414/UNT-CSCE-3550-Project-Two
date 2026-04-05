@@ -143,21 +143,22 @@ app.post('/token', (req, res) =>
 })
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
+* This function authenticates the user and issues
+* tokens. First, validates the user, second, ensures
+* the key is valid, and then, access token is generated-
+* both access and refresh tokens. 
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+
+* @param req : request
+* @param res : response
+* @return : access or refresh token
 * @exception : none
 * @note : na
 * ************************************************* */
 app.post('/login', (req, res) => 
 {
     const username = req.body.username;
+    
     if (!username)
     {
         return res.status(400).json({ error: 'Username is required '})
@@ -175,12 +176,24 @@ app.post('/login', (req, res) =>
     
     console.log(`Authorized user: ${username}`);
     const user = { name: username };
+
     const currentKey = keyStorage.getCurrentKey();
-    const activeKeyID = keyStorage.activeKeyID;
+    const activeKeyID = keyStorage.getCurrentKeyID();
     
-    if(!currentKey)
+    if(!currentKey || !activeKeyID)
     {
-        return res.status(500).json({ error: 'No key available' });
+        console.error('Login failed: No active key available');
+        return res.status(500).json({ error: 'Server configuration error - No key available' });
+    }
+
+    const keyData = keyStorage.keys.get(currentKeyID);
+    if(!keyData || !keyData.isActive || new Date() > keyData.expiresIn)
+    {
+        console.error('Login failed: Active key is expired');
+        return res.status(500).json
+        ({ 
+            error: 'Key rotation in progress - try again'
+        });   
     }
 
     const accessToken = jwt.sign
@@ -197,14 +210,21 @@ app.post('/login', (req, res) =>
         }
     );
 
-    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET || 'refresh-secret');
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+    if(!refreshTokenSecret)
+    {
+        console.error('REFRESH_TOKEN_SECRET not set in environment');
+        return res.status(500).json({ error:' Server Configuration error'});
+    }
+    const refreshToken = jwt.sign(user, refreshToken, {expiresIn: '7d'});
 
     res.json
     ({ 
         accessToken: accessToken, 
         refreshToken: refreshToken,
         keyID: activeKeyID,
-        keyExpiresIn: keyStorage.keys.get(activeKeyID).expiresIn
+        keyExpiresIn: keyData.expiresIn,
+        tokenExpiresIn: '30 seconds'
     });
 
 });
