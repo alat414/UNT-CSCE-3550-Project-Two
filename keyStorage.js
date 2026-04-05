@@ -79,7 +79,7 @@ class keyStorage
             }
             return null;
         }
-        
+
         if(!key.isActive)
         {
             console.log(`Key ${keyID} is inactive`);
@@ -91,16 +91,21 @@ class keyStorage
     }
 
         /* *************************************************
-    * This function initalizes the server
+    * This function returns the active key
 
     * @param  : none
-    * @return : none
+    * @return : The active key scret or null if no key exists.
     * @exception : none
     * @note : na
     * ************************************************* */
     getCurrentKey()
     {
-        return this.activeKeyID ? this.getKey(this.activeKeyID) : null;
+        if (!this.activeKeyID)
+        {
+            console.log('No active key ID set');
+            return null;
+        }
+        return this.getKey(this.activeKeyID);
     }
     /* *************************************************
     * This function initalizes the server
