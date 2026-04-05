@@ -156,7 +156,7 @@ class keyStorage
         }
     }
     /* *************************************************
-    * This function initalizes the server
+    * This function passing the next key to an active status
 
     * @param  : none
     * @return : none
@@ -165,9 +165,11 @@ class keyStorage
     * ************************************************* */
     promoteNextKey()
     {
+        const now = new Date();
+
         for (const [id, key] of this.keys)
         {
-            if (key.isActive && new Date() <= key.expiresIn)
+            if (key.isActive && now <= key.expiresIn)
             {
                 this.activeKeyID = id;
                 console.log(` Promoted key ${id} as active`);
@@ -175,7 +177,7 @@ class keyStorage
             }
         }
         console.log('No active keys available')
-        this.activeKeyID = null;
+        this.activeKeyID = this.generateNewKey(1);
     }
     /* *************************************************
     * This function initalizes the server
