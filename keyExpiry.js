@@ -335,26 +335,26 @@ app.get('/key-status', (req, res) =>
 });
 
 /* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
+* This function returns the server status.
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
+* @param req : request
+* @param res : response
+* @return various : server information
 * @exception : none
 * @note : na
 * ************************************************* */
 app.get('/health', (req, res) =>
 {
+    const activeKeyData = keyStorage.keys.get(keyStorage.activeKeyID);
+
     res.json
     ({
         status: 'OK',
         timestamp: new Date(),
         activeKeyID: keyStorage.activeKeyID,
-        keyCount: keyStorage.keys.size
+        keyCount: keyStorage.keys.size,
+        activeKeyValid: activeKeyData ? new Date() <= activeKeyData.expiresIn : false,
+        uptime: process.uptime()
     });
 });
 
