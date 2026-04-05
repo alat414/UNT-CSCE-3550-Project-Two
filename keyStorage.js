@@ -1,24 +1,12 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
-*  Assignment: Demonstration Code
+*  Assignment: JWKS Server with Key Rotation
 *  Purpose: A demonstration of a properly
-*           constructed and commented functions.cpp
+*           constructed and commented keyStorage.js
 ************************************************* */
 const crypto = require('crypto');
 
-/* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
 
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
-* @exception : none
-* @note : na
-* ************************************************* */
 class keyStorage
 {
     constructor()
@@ -27,10 +15,19 @@ class keyStorage
         this.activeKeyID = null;
     }
 
+    /* **********************************
+    * Generate a new encryption key
+    * @param expiresInDays - Number of days until key expiration
+    * @return - Generated key ID
+    ********************************** */
     generateNewKey(expiresInDays = 1)
     {
-        const keyID = `key-${new Date().toISOString().split('T')[0]}-${crypto.randomBytes(4).toString('hex')}`;
+        const days = Math.max(1, Math.min(30, expiresInDays));
+
+        const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+       
         const secret = crypto.randomBytes(64).toString('hex');
+        
         const expiresIn = new Date();
         expiresIn.setDate(expiresIn.getDate() + expiresInDays);
 
@@ -46,15 +43,16 @@ class keyStorage
         this.keys.set(keyID, keyData);
         this.activeKeyID = keyID;
 
-        setTimeout(() => 
-        {
-            this.deactivateKey(keyID);
+       console.log(`Generated new key: ${keyID}, expires in ${days} days (${expiresIn.toISOString()})`);
 
-        }, expiresInDays * 24 * 60 * 60 * 1000);
-
-        return keyID;
+       return keyID;
     }
 
+    /* **********************************
+    * Obtain a key by its kid, if the key is active
+    * @param keyID - key ID for retrieving
+    * @return secret - The key secret or null if expired or invalid.
+    ********************************** */
     getKey(keyID)
     {
         const key = this.keys.get(keyID);
@@ -72,16 +70,38 @@ class keyStorage
         return key.secret;
     }
 
+        /* *************************************************
+    * This function initalizes the server
+
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     getCurrentKey()
     {
         return this.activeKeyID ? this.getKey(this.activeKeyID) : null;
     }
+    /* *************************************************
+    * This function initalizes the server
 
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     getCurrentKeyID()
     {
         return this.activeKeyID;
     }
+    /* *************************************************
+    * This function initalizes the server
 
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     deactivateKey(keyID)
     {
         const key = this.keys.get(keyID);
@@ -96,7 +116,14 @@ class keyStorage
             this.promoteNextKey();
         }
     }
+    /* *************************************************
+    * This function initalizes the server
 
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     promoteNextKey()
     {
         for (const [id, key] of this.keys)
@@ -111,7 +138,14 @@ class keyStorage
         console.log('No active keys available')
         this.activeKeyID = null;
     }
+    /* *************************************************
+    * This function initalizes the server
 
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     removeExpiredKeys()
     {
         console.log(` Removing expired keys...`);
@@ -131,6 +165,14 @@ class keyStorage
         return expiredCount;
     }
 
+    /* *************************************************
+    * This function initalizes the server
+
+    * @param  : none
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
     getActiveKeys()
     {
         const activeKeys = [];
@@ -163,17 +205,4 @@ class keyStorage
     }   
 }
 
-/* *************************************************
-* This function accepts two square objects,
-*         compares there area and will return 0, 1 ,2.
-* 0: they are equal
-* 1: the first square is bigger
-* 2: the second square is bigger
-
-* @param sq1 : a Square object
-* @param sq2 : a Square object
-* @return 0,1,2 : which square is bigger
-* @exception : none
-* @note : na
-* ************************************************* */
 module.exports = new keyStorage();
