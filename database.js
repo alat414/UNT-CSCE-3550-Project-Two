@@ -1,33 +1,38 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
 *  Assignment: JWKS server with SQLite integrated
-*  Purpose: Implementation of the server with key
-*           rotation; keyExpiry.js
+*  Purpose: Implementation of a database using SQLite3
+*           into the current JWKS server (database.js) 
 ************************************************* */
-// Authenticate User
-require('dotenv').config()
 
-const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
 
-const jwt = require('jsonwebtoken')
-const keyStorage = require('./keyStorage');
-const { authenticateToken, posts, getUserPosts } = require('./app.js')
+const path = require('path');
 
-const app = express();
-const port = 8080;
+const dbPath = path.join(__dirname, 'jwks-server.db');
 
-// Valid Users declared.
-const VALID_USERS = ['Nanna', 'nanna', 'Raggi', 'raggi'];
+console.log(`Connecting to SQLite database at: ${dbPath}`);
 
-app.use(express.json())
+const db = new sqlite3.Database(dbPath, (err) => 
+{
+    if (err)
+    {
+        console.error('Error connecting to a database:', err.message);
+    }
+    else
+    {
+        console.log('Successfully connected to SQLite database');
+        initalizeDatabase();
+    }
+});
 
-keyStorage.generateNewKey(1);
 
 /* *************************************************
-* This function calls the JWKS endpoint. 
-* Only includes active keys, not expired ones. 
+* This function initalizes the database by creating new
+* tables. 
 * 
-* @return:  all active public keys 
+* @param : none
+* @return :  none
 * @exception : none
 * @note : na
 * ************************************************* */
