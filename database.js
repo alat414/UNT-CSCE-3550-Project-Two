@@ -59,7 +59,5 @@ function initalizeDatabase()
     {
         console.log('Ensured "keys" table exists');
     }
-
     });
-
 }
