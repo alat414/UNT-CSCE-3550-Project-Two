@@ -61,3 +61,26 @@ function initalizeDatabase()
     }
     });
 }
+
+/* *************************************************
+* This function closes an existing database 
+* 
+* @param : none
+* @return :  none
+* @exception : none
+* @note : na
+* ************************************************* */
+function closeDatabase() 
+{
+    db.close((err) => 
+    {
+    if(err)
+    {
+        console.error('Error closing database: ', err.message);
+    }
+    else
+    {
+        console.log('Database connection closed');
+    }
+    });
+}
