@@ -186,7 +186,7 @@ app.post('/login', (req, res) =>
         return res.status(500).json({ error: 'Server configuration error - No key available' });
     }
 
-    const keyData = keyStorage.keys.get(currentKeyID);
+    const keyData = keyStorage.keys.get(activeKeyID);
     if(!keyData || !keyData.isActive || new Date() > keyData.expiresIn)
     {
         console.error('Login failed: Active key is expired');
