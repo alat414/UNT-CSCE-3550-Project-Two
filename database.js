@@ -37,40 +37,29 @@ const db = new sqlite3.Database(dbPath, (err) =>
 * @note : na
 * ************************************************* */
 
-app.get('/.well-known/jwks.json', (req, res) => 
+function initalizeDatabase() 
 {
-    try
-    {
-        const jwks = 
-        {
-            keys: []
-        };
-        
+    console.log('Initializing database and creating tables if needed: ');
 
-        for (const [kid, keyData] of keyStorage.keys)
-        {
-            if(keyData.isActive && new Date() <= keyData.expiresIn)
-            {
-                jwks.keys.push
-                ({
-                    kid: kid,
-                    kty: "oct",
-                    alg: "HS256",
-                    use: "sig",
-
-                    exp: Math.floor(keyData.expiresIn.getTime() / 1000)
-                });
-            }
-        }
-        console.log(`JWKS endpoint: Returning ${jwks.keys.length} active keys`);
-        res.json(jwks)
-    }
-    catch(error)
+    db.run(`
+        CREATE TABLE IF NOT EXISTS keys (
+            kid,
+            secret, 
+            createdAt,
+            expiresIn, 
+            isActive, 
+        )
+    `, (err) => 
     {
-        console.log('JWKS endpoint error: ',error);
-        res.status(500).json
-        ({
-            error: 'Internal Server error'
-        });
+    if(err)
+    {
+        console.error('Error creating keys table: ', err.message);
     }
-});
+    else
+    {
+        console.log('Ensured "keys" table exists');
+    }
+
+    });
+
+}
