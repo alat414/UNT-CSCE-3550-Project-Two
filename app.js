@@ -23,15 +23,15 @@ const keyStorage = require('./keyStorage');
 const posts = 
 [
     {
-        username: 'Nanna',
-        title: 'lead singer'
+        username: "Nanna",
+        title: "lead singer"
     },
     {
-        username: 'Raggi',
-        title: 'lead singer two'
+        username: "Raggi",
+        title: "lead singer two"
     }
 
-]
+];
 
 
 /* *************************************************
@@ -121,13 +121,11 @@ function authenticateToken(req, res, next)
                         message: 'Token signature verification failed'
                     });
                 }
-
-                // Token is valid.
-                console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
-                req.user = user;
-                next();
-
             }
+            // Token is valid.
+            console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
+            req.user = user;
+            next();
         });
     }
     catch(error)
