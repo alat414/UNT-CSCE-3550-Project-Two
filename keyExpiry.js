@@ -216,7 +216,7 @@ app.post('/login', (req, res) =>
         console.error('REFRESH_TOKEN_SECRET not set in environment');
         return res.status(500).json({ error:' Server Configuration error'});
     }
-    const refreshToken = jwt.sign(user, refreshToken, {expiresIn: '7d'});
+    const refreshToken = jwt.sign(user, refreshTokenSecret, {expiresIn: '7d'});
 
     res.json
     ({ 
