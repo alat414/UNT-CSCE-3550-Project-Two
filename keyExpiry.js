@@ -69,17 +69,24 @@ async function startServer()
 * This function calls the JWKS endpoint. 
 * Only includes active keys, not expired ones. 
 * 
+* @param: userdata
 * @return:  all active public keys 
 * @exception : none
 * @note : na
 * ************************************************* */
 
-app.get('/.well-known/jwks.json', (req, res) => 
+app.get('/.well-known/jwks.json', async (req, res) => 
 {
-    keyStorage.getActiveKeys((activeKeys) => 
+    try 
     {
+        const activeKeys = await keyStorage.getActiveKeys();
         res.json({ key: activeKeys});
-    });
+    } 
+    catch (error) 
+    {
+        console.error('JWKS server endpoint error:', error)
+        res.status(500).json({ error: 'Internal server error '});
+    }
 });
 
 /* *************************************************
