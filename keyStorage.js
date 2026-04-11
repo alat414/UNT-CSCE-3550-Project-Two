@@ -18,6 +18,7 @@ class keyStorage
     {
         this.keys = new Map();
         this.activeKeyID = null;
+        this.intialized = false;
         this.loadActiveKey();
     }
 
@@ -28,27 +29,34 @@ class keyStorage
     * @param  - None
     * @return - None
     ********************************** */
-    loadActiveKey()
+    async loadActiveKey()
     {
-        db.get(`SELECT kid FROM keys WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') ORDER BY 
-        createdAt DESC LIMIT 1`, 
-        (err, row) => 
+        try
         {
-            if (err)
-            {
-                console.error('Error loading active key', err.message);
-            }
-            else if (row)
+            const row = await dbGet(`SELECT kid FROM keys WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') ORDER BY 
+            createdAt DESC LIMIT 1
+            `); 
+            
+            if (row)
             {
                 this.activeKeyID = row.kid;
-                console.error(`Loaded active key from database: ${this.activeKeyID}`);
+                console.log(`Loaded active key from database: ${this.activeKeyID}`);
             }
             else
             {
                 console.log('No active key found in the database, will generate a key'); 
-                this.generateNewKey(1);
+                await this.generateNewKey(1);
             }
-        });
+            this.intialized = true;
+        }
+        catch (err)
+        {
+            console.error('Error loading active key:', err.message);
+            await this.generateNewKey(1);
+            this.intialized = true;
+            
+        }
+        
     }
 
     /* **********************************
