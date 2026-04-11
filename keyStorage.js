@@ -106,29 +106,21 @@ class keyStorage
     * @param keyID - key ID for retrieving
     * @return - None
     ********************************** */
-    setActiveKey(keyID)
+    async setActiveKey(keyID)
     {
-        db.run(`UPDATE keys SET isActive = 0`, (err) => 
+        try 
         {
-            if (err)
-            {
-                console.log('Error deactivating keys:', err.message);
-                return;
-            }
-            db.run(`UPDATE keys SET isActive = 1 WHERE kid = ?`, [keyID], (err) =>
-            {
-                if (keyID === this.activeKeyID)
-                {
-                    console.error('Error activiating key:', err.message);
-                }
-                else
-                {
-                    this.activeKeyID = keyID;
-                    console.log(`Key ${keyID} set as active`);
-                }
-            });
-        });
-                
+            await dbRun(`UPDATE keys SET isActive = 0`); 
+            await dbRun(`UPDATE keys SET isActive = 1 WHERE kid = ?`, [keyID]);
+            this.activeKeyID = keyID;
+            console.log(`Key ${keyID} set as active`);
+            
+        } 
+        catch (error) 
+        {
+            console.error('Error activiating key:', err.message);
+            throw err;
+        }       
     }
     /* **********************************
     * Obtain a key from the database.
