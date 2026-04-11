@@ -337,26 +337,24 @@ app.post('/rotate-keys', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.get('/key-status', (req, res) =>
+app.get('/key-status', async (req, res) =>
 {
     try
     {
-        const status = [];
+        const allKeys = await keyStorage.getAllKeys();
         const now = new Date();
 
-        for (const [id, key] of keyStorage.keys)
-        {
-            status.push
-            ({
-                kid: id,
-                createdAt: key.createdAt,
-                expiresIn: key.expiresIn,
-                isActive: key.isActive,
-                isCurrent: id === keyStorage.activeKeyID,
-                expired: now > key.expiresIn,
-                timeToExpiry: key.expiresIn - now
-            });
-        }
+        const status = allKeys.map(key => ({
+            kid: id,
+            createdAt: key.createdAt,
+            expiresIn: key.expiresIn,
+            isActive: key.isActive === 1,
+            isCurrent: key.kid === keyStorage.getCurrentKeyID,
+            expired: now > new Date(key.expiresIn),
+            timeToExpiry: new Date(key.expiresIn) - now
+
+        }));
+
         res.json(status);
     }
     catch (error)
