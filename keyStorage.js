@@ -279,44 +279,7 @@ class keyStorage
             callback(activeKeys);
 
         });
-    }
-    
-    /* *************************************************
-    * This function gets all statistics about key storage
-
-    * @param  : none
-    * @return : Object containing all key statistics
-    * @exception : none
-    * @note : na
-    * ************************************************* */
-    getStats()
-    {
-        const now = new Date();
-        let total = 0;
-        let active = 0;
-        let expired = 0;
-
-        for (const [id, key] of this.keys)
-        {
-            total++;
-            if (key.isActive && now <= key.expiresIn)
-            {
-                active++;
-            }
-            else
-            {
-                expired++;
-            }
-        }
-
-        return {
-            totalKeys: total,
-            activeKeys: active,
-            expiredKeys: expired,
-            currentActiveKey: this.activeKeyID
-
-        };
-    }
+    }   
 }
 
 // Export a singleton instance.
