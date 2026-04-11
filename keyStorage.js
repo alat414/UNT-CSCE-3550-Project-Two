@@ -65,7 +65,7 @@ class keyStorage
     * @param expiresInDays - Number of days until key expiration
     * @return - Generated key ID
     ********************************** */
-    generateNewKey(expiresInDays = 1)
+    async generateNewKey(expiresInDays = 1)
     {
         const days = Math.max(1, Math.min(30, expiresInDays));
         const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
@@ -83,23 +83,22 @@ class keyStorage
             isActive: 1
         };
 
-        db.run(`INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
-                VALUES (?, ?, ?, ?, ?)
-                `, [keyData.id], [keyData.secret], [keyData.createdAt], [keyData.expiresIn], [keyData.isActive], 
-        (err) => 
+        try
         {
-            if (err)
-            {
-                console.error('Error saving key into database', err.message);
-            }
-            else
-            {
-                console.log(`Generated and saved new key: ${keyID}, expires in ${days} days`); 
-                this.setActiveKey(keyID);
-            }
-        });
-
-       return keyID;
+            await dbRun(`INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
+                VALUES (?, ?, ?, ?, ?)
+                `, [keyData.id], [keyData.secret], [keyData.createdAt], [keyData.expiresIn], [keyData.isActive]);
+            
+            console.log(`Generated and saved new key: ${keyID}, expires in ${days} days`); 
+            await this.setActiveKey(keyID);
+            return keyID;
+        }
+        catch (err)
+        {
+            console.error('Error saving key into database:', err.message);
+            throw err; 
+        }
+        
     }
 
     /* **********************************
