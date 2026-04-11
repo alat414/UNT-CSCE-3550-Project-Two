@@ -249,33 +249,36 @@ class keyStorage
     /* *************************************************
     * This function gets all active keys for JWKS endpoint
 
-    * @param  : none
+    * @param  callback: function used to backtrack
     * @return : Array of active key metadata
     * @exception : none
     * @note : na
     * ************************************************* */
-    getActiveKeys()
+    getActiveKeys(callback)
     {
-        const activeKeys = [];
-        const now = new Date();
-
-        for (const [id, key] of this.keys)
-        {
-            if(key.isActive && now <= key.expiresIn)
+        db.all(
+            `SELECT kid, expiresIn FROM keys 
+            WHERE isActive = 1 AND  datetime(expireIn) > datetime('now')`
+            , (err, rows) => {
+            if (err)
             {
-                activeKeys.push
-                ({
-                    kid: id,
-                    kty: "oct",
-                    alg: "HS256",
-                    use: "sig",
-                    exp: Math.floor(key.expiresIn.getTime() / 1000)
-                });
+                console.error('Error getting active keys:', err.message);
+                callback([]);
+                return;
             }
-        }
+            
+            const activeKeys = rows.maps(row => ({
+                kid: row.kid,
+                kty: "oct",
+                alg: "HS256",
+                use: "sig",
+                exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
+            }));
 
-        console.log(`Found ${activeKeys.length} active keys for JWKS`);
-        return activeKeys;
+            console.log(`Found ${activeKeys.length} active keys for JWKS`);
+            callback(activeKeys);
+
+        });
     }
     
     /* *************************************************
