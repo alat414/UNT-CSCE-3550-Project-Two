@@ -54,11 +54,9 @@ class keyStorage
     generateNewKey(expiresInDays = 1)
     {
         const days = Math.max(1, Math.min(30, expiresInDays));
-
         const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
-       
         const secret = crypto.randomBytes(64).toString('hex');
-        
+        const createdAt = new Date().toISOString();
         const expiresIn = new Date();
         expiresIn.setDate(expiresIn.getDate() + expiresInDays);
 
@@ -66,15 +64,26 @@ class keyStorage
         {
             id: keyID,
             secret: secret,
-            createdAt: new Date(),
-            expiresIn: expiresIn,
-            isActive: true
+            createdAt: createdAt,
+            expiresIn: expiresIn.toISOString(),
+            isActive: 1
         };
 
-        this.keys.set(keyID, keyData);
-        this.activeKeyID = keyID;
-
-       console.log(`Generated new key: ${keyID}, expires in ${days} days (${expiresIn.toISOString()})`);
+        db.run(`INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
+                VALUES (?, ?, ?, ?, ?)
+                `, [keyData.id], [keyData.secret], [keyData.createdAt], [keyData.expiresIn], [keyData.isActive], 
+        (err) => 
+        {
+            if (err)
+            {
+                console.error('Error saving key into database', err.message);
+            }
+            else
+            {
+                console.log(`Generated and saved new key: ${keyID}, expires in ${days} days`); 
+                this.setActiveKey(keyID);
+            }
+        });
 
        return keyID;
     }
