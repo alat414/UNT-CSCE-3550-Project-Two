@@ -13,6 +13,37 @@ class keyStorage
     {
         this.keys = new Map();
         this.activeKeyID = null;
+        this.loadActiveKey();
+    }
+
+
+    /* **********************************
+    * Loading the active key from database 
+    * during the server startup.
+    * @param  - None
+    * @return - None
+    ********************************** */
+    loadActiveKey()
+    {
+        db.get(`SELECT kid FROM keys WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') ORDER BY 
+        createdAt DESC LIMIT 1`, 
+        (err, row) => 
+        {
+            if (err)
+            {
+                console.error('Error loading active key', err.message);
+            }
+            else if (row)
+            {
+                this.activeKeyID = row.kid;
+                console.error(`Loaded active key from database: ${this.activeKeyID}`);
+            }
+            else
+            {
+                console.log('No active key found in the database, will generate a key'); 
+                this.generateNewKey(1);
+            }
+        });
     }
 
     /* **********************************
