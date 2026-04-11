@@ -16,6 +16,8 @@ const { authenticateToken, posts, getUserPosts } = require('./app.js')
 const app = express();
 const port = 8080;
 
+const db = require('./database');
+
 // Valid Users declared.
 const VALID_USERS = ['Nanna', 'nanna', 'Raggi', 'raggi'];
 
