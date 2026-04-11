@@ -206,28 +206,20 @@ class keyStorage
     * @exception : none
     * @note : na
     * ************************************************* */
-    removeExpiredKeys(callback)
+    async removeExpiredKeys()
     {
-        db.run(`DELETE FROM keys WHERE datetime(expiresIn) <= datetime(now)`, function(err)
+        try 
         {
-            // In the instance where query leads to an error, program backtracks.
-            if (err)
-            {
-                console.error('Error removing expired keys:', err.message);
-                if (callback)
-                {
-                    callback(0);
-                }
-            }
-            else
-            {
-                console.log`(Removed ${this.changes} expired keys)`;
-                if (callback)
-                {
-                    callback(this.changes);
-                }
-            }
-        });
+            const result = await dbRun(`DELETE FROM keys WHERE datetime(expiresIn) <= datetime('now')`);
+            const count = result.changes || 0;
+            console.log`(Removed ${count} expired keys)`;
+            return count;
+        } 
+        catch (error) 
+        {
+            console.error('Error removing expired keys:', err.message);
+            return 0;
+        }
     }
 
     /* *************************************************
