@@ -47,7 +47,8 @@ class keyStorage
     }
 
     /* **********************************
-    * Generate a new encryption key
+    * Generate a new encryption key; passing the new key 
+    * to the database saved. 
     * @param expiresInDays - Number of days until key expiration
     * @return - Generated key ID
     ********************************** */
@@ -88,6 +89,35 @@ class keyStorage
        return keyID;
     }
 
+    /* **********************************
+    * The function sets the key as an active key
+    * @param keyID - key ID for retrieving
+    * @return - None
+    ********************************** */
+    setActiveKey(keyID)
+    {
+        db.run(`UPDATE keys SET isActive = 0`, (err) => 
+        {
+            if (err)
+            {
+                console.log('Error deactivating keys:', err.message);
+                return;
+            }
+            db.run(`UPDATE keys SET isActive = 1 WHERE kid = ?`, [keyID], (err) =>
+            {
+                if (keyID === this.activeKeyID)
+                {
+                    console.error('Error activiating key:', err.message);
+                }
+                else
+                {
+                    this.activeKeyID = keyID;
+                    console.log(`Key ${keyID} set as active`);
+                }
+            });
+        });
+                
+    }
     /* **********************************
     * Obtain a key by its kid, if the key is active
     * @param keyID - key ID for retrieving
@@ -130,7 +160,7 @@ class keyStorage
         
     }
 
-        /* *************************************************
+    /* *************************************************
     * This function returns the active key
 
     * @param  : none
