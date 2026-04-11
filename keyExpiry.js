@@ -183,7 +183,7 @@ app.post('/token', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.post('/login', (req, res) => 
+app.post('/login', async (req, res) => 
 {
     const username = req.body.username;
     
@@ -205,8 +205,9 @@ app.post('/login', (req, res) =>
     console.log(`Authorized user: ${username}`);
     const user = { name: username };
 
-    keyStorage.getCurrentKey().then(currentKey => 
+    try 
     {
+        const currentKey = await keyStorage.getCurrentKey();
         const activeKeyID = keyStorage.getCurrentKeyID();
         
         if(!currentKey || !activeKeyID)
@@ -215,55 +216,52 @@ app.post('/login', (req, res) =>
             return res.status(500).json({ error: 'Server configuration error - No key available' });
         }
 
-        db.get(`SELECT expiresIn FROM keys WHERE kid = ?`, [activeKey], (err,row) => 
+        const keyData = await keyStorage.getKeyData(activeKeyID);
+        if(!keyData || !keyData.isActive || new Date() > new Date(keyData.expiresIn))
         {
-            if(err || !row)
-            {
-                return res.status(500).json
-                ({ 
-                    error: 'Error retrieving key'
-                });   
-            }
+            console.error('Login failed: Active key is expired');
+            return res.status(500).json({ error: 'Key rotation in progress - please try again' });
+        }
 
-            const accessToken = jwt.sign
-            (
-                user,
-                currentKey,
+        const accessToken = jwt.sign
+        (
+            user,
+            currentKey,
+            {
+                expiresIn: '30s',
+                header: 
                 {
-                    expiresIn: '30s',
-                    header: 
-                    {
-                        kid: activeKeyID,
-                        alg: 'HS256'
-                    }
+                    kid: activeKeyID,
+                    alg: 'HS256'
                 }
-            );
-
-            const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
-            if (!refreshTokenSecret)
-            {
-                console.error('REFRESH_TOKEN_SECRET not set');
-                return res.status(500).json({ error: 'Server Configuration Error'});
             }
+        );
 
-            const refreshToken = jwt.sign(user, refreshTokenSecret, {expiresIn: '7d'});
+        const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+        if (!refreshTokenSecret)
+        {
+            console.error('REFRESH_TOKEN_SECRET not set');
+            return res.status(500).json({ error: 'Server Configuration Error'});
+        }
 
-            res.json
-            ({ 
-                accessToken: accessToken, 
-                refreshToken: refreshToken,
-                keyID: activeKeyID,
-                keyExpiresIn: row.expiresIn,
-                tokenExpiresIn: '30 seconds'
-            });
+        const refreshToken = jwt.sign(user, refreshTokenSecret, {expiresIn: '7d'});
 
+        res.json
+        ({ 
+            accessToken: accessToken, 
+            refreshToken: refreshToken,
+            keyID: activeKeyID,
+            keyExpiresIn: row.expiresIn,
+            tokenExpiresIn: '30 seconds'
         });
-    }).catch(error => 
+
+    } 
+    catch (error) 
     {
-        console.error('REFRESH_TOKEN_SECRET not set in environment');
-        return res.status(500).json({ error:' Server Configuration error'})
-    });
-       
+        console.error('Login error:', error);
+        res.status(500).json({ error:' Server Configuration error'})
+    }; 
+     
 });
 
 /* *************************************************
