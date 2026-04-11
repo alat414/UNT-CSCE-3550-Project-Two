@@ -98,7 +98,7 @@ app.get('/.well-known/jwks.json', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.post('/token', (req, res) =>
+app.post('/token', async (req, res) =>
 {
     const refreshToken = req.body.token
 
