@@ -210,68 +210,10 @@ class keyStorage
     * ************************************************* */
     getCurrentKeyID()
     {
-        if (!this.activeKeyID)
-        {
-            return null;
-        }
-
-        const key = this.keys.get(this.activeKeyID);
-        // Validates that the active kid is pointing to a valid key.
-        if (!key || !key.isActive || new Date() > key.expiresIn)
-        {
-            console.log(`Current active key ${this.activeKeyID} is no longer valid`);
-            this.promoteNextKey();
-        }
-
         return this.activeKeyID;
     }
-    /* *************************************************
-    * This function disables a specific key.
 
-    * @param  keyID: key ID
-    * @return : none
-    * @exception : none
-    * @note : na
-    * ************************************************* */
-    deactivateKey(keyID)
-    {
-        const key = this.keys.get(keyID);
-        if(key && key.isActive)
-        {
-            key.isActive = false;
-            console.log(`Key ${keyID} deactivated`);
-        }
-
-        if (keyID === this.activeKeyID)
-        {
-            console.log(`Active key ${keyID} was deactivated, promoting new key`);
-            this.promoteNextKey();
-        }
-    }
-    /* *************************************************
-    * This function passing the next key to an active status
-
-    * @param  : none
-    * @return : none
-    * @exception : none
-    * @note : na
-    * ************************************************* */
-    promoteNextKey()
-    {
-        const now = new Date();
-
-        for (const [id, key] of this.keys)
-        {
-            if (key.isActive && now <= key.expiresIn)
-            {
-                this.activeKeyID = id;
-                console.log(` Promoted key ${id} as active`);
-                return;
-            }
-        }
-        console.log('No active keys available')
-        this.activeKeyID = this.generateNewKey(1);
-    }
+   
     /* *************************************************
     * This function removes all expired keys from storage
 
