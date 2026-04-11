@@ -105,7 +105,7 @@ app.post('/token', async (req, res) =>
     if (!refreshToken) 
     {
         console.log('Token refresh failed: No refresh token provided');
-        return res.sendStatus(401).json({ error: 'Refresh token required '});
+        return res.status(401).json({ error: 'Refresh token required '});
     }
 
     try 
