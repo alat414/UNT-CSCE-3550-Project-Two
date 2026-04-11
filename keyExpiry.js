@@ -276,12 +276,10 @@ app.post('/login', async (req, res) =>
 * ************************************************* */
 app.get('/posts', authenticateToken, (req, res) => 
 {
-    console.log('GET /post - User:' , req.user.name);
-
+    console.log(`GET /posts - User: ${req.user.name}`);
     const userPosts = getUserPosts(req.user.name);
-
     res.json(userPosts);    
-})
+});
 
 /* *************************************************
 * This function successfully rotates the keys 
@@ -293,27 +291,27 @@ app.get('/posts', authenticateToken, (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.post('/rotate-keys', (req, res) =>
+app.post('/rotate-keys', async (req, res) =>
 {
     try
     {
         console.log('Rotating keys:');
         const days = req.body.expiresInDays || 1;
         
-        const newKeyID = keyStorage.generateNewKey(days);
+        const newKeyID = await keyStorage.generateNewKey(days);
         console.log(`New keys generated: ${newKeyID}`);
 
-        const cleanedCount = keyStorage.removeExpiredKeys();
+        const cleanedCount = await keyStorage.removeExpiredKeys();
         console.log(`Cleaned up keys : ${cleanedCount}`);
 
-        const activeKeyData = keyStorage.keys.get(keyStorage.activeKeyID);
+        const activeKeyData = await keyStorage.keys.get(keyStorage.activeKeyID);
 
         res.json
         ({
             success: true,
             message: 'Keys rotated successfully',
             newKeyID: newKeyID,
-            activeKeyID: keyStorage.activeKeyID,
+            activeKeyID: keyStorage.getCurrentKeyID(),
             activeKeyExpires: activeKeyData ? activeKeyData.expiresIn : null,
             cleanedupKeys: cleanedCount
         });
