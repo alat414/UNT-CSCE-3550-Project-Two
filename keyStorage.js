@@ -128,55 +128,43 @@ class keyStorage
     * @param callback - key ID for retrieving
     * @return secret - The key secret or null if expired or invalid.
     ********************************** */
-    getKey(keyID, callback)
+    async getKey(keyID)
     {
-        db.get(`SELECT secret, isActive, expiresIn FROM key WHERE kid = ?`, [keyID], (err, row) =>
+        try 
         {
-            if (err)
+            const row = await dbGet(`SELECT secret, isActive, expiresIn FROM key WHERE kid = ?`, [keyID]);
             {
-                console.error(`Error retrieving key ${keyID}:`, err.message);
-
-                callback(null);
-                return;
-            }
-
-            if(!row)
-            {
-                console.log(`Key ${keyID} not found`);
-                callback(null);
-                return;
-            }
-
-            const now = new Date();
-            const expiresIn = new Date(row.expiresIn);
-
-            if (now > expiresIn)
-            {
-                console.log(`Key ${keyID} is expired`);
-
-                db.run(`UPDATE keys SET isActive = 0 WHERE kid = ?`, keyID, err => 
+                if(!row)
                 {
-                    if (err)
-                    {
-                        console.error('Error deactivating expired key' , err.message);
-                    }
-                })
+                    console.log(`Key ${keyID} not found`);
+                    return null;
+                }
 
-                callback(null);
-                return;
-            }
+                const now = new Date();
+                const expiresIn = new Date(row.expiresIn);
 
-            if (!row.isActive)
-            {
-                console.log(`Key ${keyID} is inactive`);
+                if (now > expiresIn)
+                {
+                    console.log(`Key ${keyID} is expired`);
 
-                callback(null);
-                return;
-            }
+                    await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID])
+                    return null;
+                }
 
-            callback(row.secret);
-        });
-        
+                if (!row.isActive)
+                {
+                    console.log(`Key ${keyID} is inactive`);
+                    return null;
+                }
+
+                return row.secret;
+            };
+        } 
+        catch (err) 
+        {
+            console.error(`Error retrieving key ${keyID}:`, err.message);
+            return null;
+        }
     }
 
     /* *************************************************
