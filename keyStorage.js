@@ -215,50 +215,35 @@ class keyStorage
 
    
     /* *************************************************
-    * This function removes all expired keys from storage
-
-    * @param  : none
-    * @return count : Number of keys removed
+    * This function removes all expired keys from database
+    *
+    * @param  callback: function used to backtrack
+    * @return : none
     * @exception : none
     * @note : na
     * ************************************************* */
-    removeExpiredKeys()
+    removeExpiredKeys(callback)
     {
-        console.log(` Removing expired keys...`);
-        const now = new Date();
-        let expiredCount = 0;
-        let activeKeyWasRemoved = false;
-        const keysToRemove = [];
-
-        for (const [id, key] of this.keys)
+        db.run(`DELETE FROM keys WHERE datetime(expiresIn) <= datetime(now)`, function(err)
         {
-            if (now > key.expiresIn)
+            // In the instance where query leads to an error, program backtracks.
+            if (err)
             {
-                keysToRemove.push(id);
-                if (id === this.activeKeyID)
+                console.error('Error removing expired keys:', err.message);
+                if (callback)
                 {
-                    activeKeyWasRemoved = true;
+                    callback(0);
                 }
             }
-        }
-
-        // Removing key
-        for (const id of keysToRemove)
-        {
-            this.keys.delete(id);
-            expiredCount++;
-            console.log(`Removed expired key: ${id}`);
-        }
-
-        // Function ensures the active key was removed and new key was placed
-        if (activeKeyWasRemoved)
-        {
-            console.log('Active key was removed, promoting next available key');
-            this.promoteNextKey();
-        }
-
-        console.log(`Removed ${expiredCount} expired keys`);
-        return expiredCount;
+            else
+            {
+                console.log`(Removed ${this.changes} expired keys)`;
+                if (callback)
+                {
+                    callback(this.changes);
+                }
+            }
+        });
     }
 
     /* *************************************************
