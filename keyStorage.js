@@ -119,44 +119,59 @@ class keyStorage
                 
     }
     /* **********************************
-    * Obtain a key by its kid, if the key is active
+    * Obtain a key from the database.
     * @param keyID - key ID for retrieving
+    * @param callback - key ID for retrieving
     * @return secret - The key secret or null if expired or invalid.
     ********************************** */
-    getKey(keyID)
+    getKey(keyID, callback)
     {
-        const key = this.keys.get(keyID);
-        if (!key)
+        db.get(`SELECT secret, isActive, expiresIn FROM key WHERE kid = ?`, [keyID], (err, row) =>
         {
-            console.log(`key ${keyID} not found`);
-            return null;
-        }
-
-        const now = new Date();
-        if (now > key.expiresIn)
-        {
-            console.log(`Key ${keyID} is expired (expired at {key.expiresIn.toISOString()})`);
-
-            if(key.isActive)
+            if (err)
             {
-                key.isActive = false;
-                console.log(`Deactivated expired key: ${keyID}`);
+                console.error(`Error retrieving key ${keyID}:`, err.message);
 
-                if (keyID === this.activeKeyID)
-                {
-                    this.promoteNextKey();
-                }
+                callback(null);
+                return;
             }
-            return null;
-        }
 
-        if(!key.isActive)
-        {
-            console.log(`Key ${keyID} is inactive`);
-            return null;
-        }
+            if(!row)
+            {
+                console.log(`Key ${keyID} not found`);
+                callback(null);
+                return;
+            }
 
-        return key.secret;
+            const now = new Date();
+            const expiresIn = new Date(row.expiresIn);
+
+            if (now > expiresIn)
+            {
+                console.log(`Key ${keyID} is expired`);
+
+                db.run(`UPDATE keys SET isActive = 0 WHERE kid = ?`, keyID, err => 
+                {
+                    if (err)
+                    {
+                        console.error('Error deactivating expired key' , err.message);
+                    }
+                })
+
+                callback(null);
+                return;
+            }
+
+            if (!row.isActive)
+            {
+                console.log(`Key ${keyID} is inactive`);
+
+                callback(null);
+                return;
+            }
+
+            callback(row.secret);
+        });
         
     }
 
