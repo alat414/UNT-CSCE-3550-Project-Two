@@ -91,7 +91,7 @@ app.get('/.well-known/jwks.json', async (req, res) =>
 
 /* *************************************************
 * This function request the refresh token. 
-
+*
 * @param : request
 * @param : response
 * @return : refresh token
@@ -105,20 +105,24 @@ app.post('/token', (req, res) =>
     if (!refreshToken) 
     {
         console.log('Token refresh failed: No refresh token provided');
-        return res.sendStatus(401)
+        return res.sendStatus(401).json({ error: 'Refresh token required '});
     }
 
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if (err)
-        {
-            console.log('Token refresh failed: Invalid refresh token');
-            return res.status(403).json
-            ({
-                error: 'Invalid refresh token'
+    try 
+    {
+        const user = await new Promise((resolve, reject) => {
+            jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+                if (err)
+                {
+                    reject(err)
+                }
+                else 
+                {
+                    resolve(decoded);
+                }
             });
-        }   
-
-        const currentKey = keyStorage.getCurrentKey();
+        });
+        const currentKey = await keyStorage.getCurrentKey();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
         if(!currentKey || !currentKeyID)
@@ -130,8 +134,8 @@ app.post('/token', (req, res) =>
             });   
         }
 
-        const keyData = keyStorage.keys.get(currentKeyID);
-        if(!keyData || !keyData.isActive || new Date() > keyData.expiresIn)
+        const keyData = await keyStorage.getKeyData(currentKeyID);
+        if(!keyData || !keyData.isActive || new Date() > new Date(keyData.expiresIn))
         {
             console.error('Token refresh failed: Active key is expired');
             return res.status(500).json
@@ -147,7 +151,7 @@ app.post('/token', (req, res) =>
             },
             currentKey,
             {
-                expiresIn: '20s',
+                expiresIn: '30s',
                 header:
                 {
                     kid: currentKeyID,
@@ -157,9 +161,14 @@ app.post('/token', (req, res) =>
             }
         );
         console.log(`Token refresh successful for user: ${user.name} using key ${currentKeyID}`);
-        res.json({ accessToken: accessToken})
-    })
-})
+        res.json({ accessToken: accessToken});
+    }
+    catch (err) 
+    {
+        console.log('Token refresh failed: Invalid refresh token');
+        res.status(403).json({ error: 'Invalid refresh token' });
+    } 
+});
 
 /* *************************************************
 * This function authenticates the user and issues
