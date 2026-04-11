@@ -5,7 +5,12 @@
 *           constructed and commented keyStorage.js
 ************************************************* */
 const crypto = require('crypto');
+const { promisify } = require('util');
+const db = require('./database');
 
+const dbGet = promisify(db.get).bind(db);
+const dbRun = promisify(db.run).bind(db);
+const dbAll = promisify(db.all).bind(db);
 
 class keyStorage
 {
