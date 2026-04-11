@@ -374,19 +374,31 @@ app.get('/key-status', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.get('/health', (req, res) =>
+app.get('/health', async (req, res) =>
 {
-    const activeKeyData = keyStorage.keys.get(keyStorage.activeKeyID);
+    try 
+    {
+        const activeKeyData = await keyStorage.getKeyData(keyStorage.getCurrentKeyID());
+        const allKeys = await keyStorage.getAllKeys();
 
-    res.json
-    ({
-        status: 'OK',
-        timestamp: new Date(),
-        activeKeyID: keyStorage.activeKeyID,
-        keyCount: keyStorage.keys.size,
-        activeKeyValid: activeKeyData ? new Date() <= activeKeyData.expiresIn : false,
-        uptime: process.uptime()
-    });
+        res.json
+        ({
+            status: 'OK',
+            timestamp: new Date(),
+            activeKeyID: keyStorage.getCurrentKeyID(),
+            keyCount: allKeys.length,
+            activeKeyValid: activeKeyData ? new Date() <= new Date(activeKeyData.expiresIn) : false,
+            uptime: process.uptime(),
+            database: 'SQLite (jwks-serverStarted.db)'
+        });
+        
+    } 
+    catch (error) 
+    {
+        console.error('Health check error:', error);
+        res.status(500).json({ status: 'Error', error: error.message});
+    }
+    ;
 });
 
 /* *************************************************
