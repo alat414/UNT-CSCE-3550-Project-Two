@@ -11,10 +11,10 @@ const express = require('express');
 
 const jwt = require('jsonwebtoken')
 const keyStorage = require('./keyStorage');
-const { authenticateToken, posts, getUserPosts } = require('./app.js')
+const { authenticateToken, getUserPosts } = require('./app.js')
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 const db = require('./database');
 
@@ -25,6 +25,46 @@ app.use(express.json())
 
 keyStorage.generateNewKey(1);
 
+let serverStarted = false;
+
+async function startServer() 
+{
+    while (!keyStorage.intialized)
+    {
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (!serverStarted)
+        {
+            app.listen(port, () => 
+            {
+                console.log
+                (`
+                    =====================================================
+                    JWKS Server with Key Rotation
+                    =====================================================
+                    KeyExpiry server running at http://localhost:${port}
+                    Database: jwks-server.test.db
+                    Active Key ID: ${keyStorage.getCurrentKeyID()}
+
+                    Available endpoints:
+                    -----------------------------------------------------
+                    - GET /.well-known/jwks.json    - Public JWKS endpoint
+                    - GET /health                   - Server health check
+                    - GET /key-status               - Detailed key information
+                    - GET /posts                    - Protected post information(authentication req)
+                    - GET /debug-keys               - Debugging key information (dev only)
+
+                    - POST /login                   - Authenticate and get tokens
+                    - POST /token                   - Refresh access token
+                    - POST /rotate-keys             - Rotate keys
+                    -----------------------------------------------------
+                `);
+            });
+
+            serverStarted = true;
+        }
+    }
+}
 /* *************************************************
 * This function calls the JWKS endpoint. 
 * Only includes active keys, not expired ones. 
@@ -374,28 +414,6 @@ app.get('/debug-keys', (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.listen(port, () => 
-{
-    console.log
-    (`
-        =====================================================
-        JWKS Server with Key Rotation
-        =====================================================
-        KeyExpiry server running at http://localhost:${port}
 
-        Available endpoints:
-        -----------------------------------------------------
-        - GET /.well-known/jwks.json    - Public JWKS endpoint
-        - GET /health                   - Server health check
-        - GET /key-status               - Detailed key information
-        - GET /posts                    - Protected post information(authentication req)
-        - GET /debug-keys               - Debugging key information (dev only)
-
-        - POST /login                   - Authenticate and get tokens
-        - POST /token                   - Refresh access token
-        - POST /rotate-keys             - Rotate keys
-    
-    `);
-});
 
 module.exports = { app, keyStorage };
