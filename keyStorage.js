@@ -169,28 +169,20 @@ class keyStorage
 
     /* *************************************************
     * This function returns the current, active key
-    * via the Promise async use. 
+    * via the getkey method. 
     * 
     * @param  : none
     * @return : The active key scret or null if no key exists.
     * @exception : none
     * @note : na
     * ************************************************* */
-    getCurrentKey()
+    async getCurrentKey()
     {
-        return new Promise((resolve, reject) =>
+        if (!this.activeKeyID)
         {
-            if (!this.activeKeyID)
-            {
-                reject(null);
-                return;
-            }
-
-            this.getKey(this.activeKeyID, (secret) =>
-            {
-                resolve(secret);
-            });
-        })
+            return null;
+        }
+        return await this.getKey(this.activeKeyID);
     }
     /* *************************************************
     * This function returns the current active key ID
