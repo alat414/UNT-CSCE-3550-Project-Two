@@ -230,19 +230,14 @@ class keyStorage
     * @exception : none
     * @note : na
     * ************************************************* */
-    getActiveKeys(callback)
+    async getActiveKeys()
     {
-        db.all(
+        try 
+        {
+            const rows = await dbAll(
             `SELECT kid, expiresIn FROM keys 
-            WHERE isActive = 1 AND  datetime(expireIn) > datetime('now')`
-            , (err, rows) => {
-            if (err)
-            {
-                console.error('Error getting active keys:', err.message);
-                callback([]);
-                return;
-            }
-            
+            WHERE isActive = 1 AND  datetime(expireIn) > datetime('now')`);
+
             const activeKeys = rows.maps(row => ({
                 kid: row.kid,
                 kty: "oct",
@@ -251,12 +246,62 @@ class keyStorage
                 exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
             }));
 
-            console.log(`Found ${activeKeys.length} active keys for JWKS`);
-            callback(activeKeys);
+            console.log(`Found ${activeKeys.length} active keys for JWKS server`);
+            return activeKeys;
+        } 
+        catch (error) 
+        {
+            console.error('Error getting active keys:', err.message);
+            return [];       
+        }
 
-        });
-    }   
+    }
+
+    /* *************************************************
+    * This function gets all key data via SQL query prompt
+
+    * @param  keyID: kid
+    * @return : kid details
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    async getKeyData(keyID)
+    {
+        try 
+        {
+            return await dbGet(`SELECT * FROM keys WHERE kid = ?`, [keyID]);
+            
+        } 
+        catch (err) 
+        {
+            console.error(`Error getting key data for ${keyID}:`, err.message);
+            return null;
+        }
+    }
+
+    /* *************************************************
+    * This function gets all active keys for JWKS endpoint
+
+    * @param  : none
+    * @return : key id 
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    async getAllKeys()
+    {
+        try 
+        {
+            return await dbAll(`SELECT * FROM keys ORDER BY createdAt DESC`, [keyID]);
+        } 
+        catch (err) 
+        {
+            console.error('Error getting all keys:', err.message);
+            return [];
+        }
+    }
 }
+
+
 
 // Export a singleton instance.
 module.exports = new keyStorage();
