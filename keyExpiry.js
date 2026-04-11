@@ -36,40 +36,10 @@ keyStorage.generateNewKey(1);
 
 app.get('/.well-known/jwks.json', (req, res) => 
 {
-    try
+    keyStorage.getActiveKeys((activeKeys) => 
     {
-        const jwks = 
-        {
-            keys: []
-        };
-        
-
-        for (const [kid, keyData] of keyStorage.keys)
-        {
-            if(keyData.isActive && new Date() <= keyData.expiresIn)
-            {
-                jwks.keys.push
-                ({
-                    kid: kid,
-                    kty: "oct",
-                    alg: "HS256",
-                    use: "sig",
-
-                    exp: Math.floor(keyData.expiresIn.getTime() / 1000)
-                });
-            }
-        }
-        console.log(`JWKS endpoint: Returning ${jwks.keys.length} active keys`);
-        res.json(jwks)
-    }
-    catch(error)
-    {
-        console.log('JWKS endpoint error: ',error);
-        res.status(500).json
-        ({
-            error: 'Internal Server error'
-        });
-    }
+        res.json({ key: activeKeys});
+    });
 });
 
 /* *************************************************
