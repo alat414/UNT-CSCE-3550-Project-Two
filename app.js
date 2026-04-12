@@ -46,65 +46,63 @@ const posts =
 * @return : na
 * @note : na
 * ************************************************* */
-function authenticateToken(req, res, next)
+function authenticateToken(req, res, next) 
 {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     
-    if (!token)
+    if (!token) 
     {
-        console.log('Authentiation failed: No token provided');
-        return res.status(401).json({
+        console.log('Authentication failed: No token provided');
+        return res.status(401).json
+        ({
             error: 'Authentication Required',
-            message: 'No token provided in the Authoriztion Header'
+            message: 'No token provided in the Authorization Header'
         });
     }
 
-    try
+    try 
     {
         const decodedHeader = jwt.decode(token, { complete: true });
 
-        if (!decodedHeader)
+        if (!decodedHeader) 
         {
-            console.log('Authentiation failed: Invalid token format');
-            return res.status(401).json
-            ({ 
+            console.log('Authentication failed: Invalid token format');
+            return res.status(401).json({ 
                 error: 'Invalid token',
                 message: 'Token cannot be decoded' 
             });
         }
 
-        if (!decodedHeader.header || !decodedHeader.header.kid)
+        if (!decodedHeader.header || !decodedHeader.header.kid) 
         {
-            console.log('Authentiation failed: No key ID in the token header');
-            return res.status(401).json
-            ({ 
+            console.log('Authentication failed: No key ID in the token header');
+            return res.status(401).json({ 
                 error: 'Invalid token structure',
                 message: 'Token missing key ID (kid) in header' 
             });
         }
 
         const keyID = decodedHeader.header.kid;
-
         console.log(`Authenticating token with key ID: ${keyID}`);
 
+        // Async key lookup
         keyStorage.getKey(keyID).then(signingKey => 
         {
-            if(!signingKey)
-            {
-                console.log(`Authenticating failed with key ID: ${keyID}`);
+            if (!signingKey) {
+                console.log(`Authentication failed: Key ID ${keyID} not found or invalid`);
                 return res.status(401).json
                 ({
                     error: 'Key invalid',
                     message: 'Token was signed with invalid key, retry.'
                 });
             }
-
+            
             jwt.verify(token, signingKey, (err, user) => 
             {
-                if (err)
+                if (err) 
                 {
-                    if (err.name === 'TokenExpiredError')
+                    if (err.name === 'TokenExpiredError') 
                     {
                         console.log(`Authentication failed: Token expired for key ${keyID}`);
                         return res.status(403).json
@@ -114,7 +112,7 @@ function authenticateToken(req, res, next)
                         });
                     }
 
-                    if (err.name === 'JSONWebTokenError')
+                    if (err.name === 'JsonWebTokenError') 
                     {
                         console.log(`Authentication failed: Invalid signature for key ${keyID}`);
                         return res.status(403).json
@@ -123,30 +121,35 @@ function authenticateToken(req, res, next)
                             message: 'Token signature verification failed'
                         });
                     }
+
+                    console.log(`Authentication failed: ${err.message}`);
+                    return res.status(403).json
+                    ({ 
+                        error: 'Token Verification Failed',
+                        message: err.message
+                    });
                 }
-                // Token is valid.
+                
                 console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
                 req.user = user;
                 next();
-            }).catch(error => 
-            {
-                console.log(`Authentication failed: Invalid signature for key ${keyID}`);
-                return res.status(403).json
-                ({ 
-                    error: 'Internal server error',
-                    message: 'Error processing authentication'
-                });
             });
-    })
-    catch(error)
+        }).catch(error => 
+        {
+            console.error('Key lookup error:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        });
+        
+    } 
+    catch(error) 
     {
-        console.error('Authentication middleware error failed', error);
+        console.error('Authentication middleware error:', error);
         return res.status(500).json
         ({ 
-            error: 'Internal Server error',
+            error: 'Internal Server Error',
             message: 'Error processing authentication'
         });
-    } 
+    }
 }
 
 /* *************************************************
