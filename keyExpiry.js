@@ -402,7 +402,7 @@ app.get('/health', async (req, res) =>
 });
 
 /* *************************************************
-* This function saves key information;
+* This function saves key details;
 * intended for development use only. 
 *
 * @param req : request
@@ -441,5 +441,5 @@ app.get('/debug-keys', async (req, res) =>
 * @note : na
 * ************************************************* */
 
-
+startServer();
 module.exports = { app, keyStorage };
