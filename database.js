@@ -41,23 +41,31 @@ function initalizeDatabase()
 {
     console.log('Initializing database and creating tables if needed: ');
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS keys (
-            kid,
-            secret, 
-            createdAt,
-            expiresIn, 
-            isActive, 
-        )
-    `, (err) => 
-    {
+    db.run(`CREATE TABLE IF NOT EXISTS keys (
+        kid TEXT PRIMARY KEY,
+        secret TEXT NOT NULL, 
+        createdAt TEXT NOT NULL,
+        expiresIn TEXT NOT NULL, 
+        isActive INTEGER NOT NULL DEFAULT 1, 
+    )`, (err) => {
     if(err)
     {
         console.error('Error creating keys table: ', err.message);
+        console.error('Full error', err);
     }
     else
     {
         console.log('Ensured "keys" table exists');
+        db.get("SELECT COUNT(*) as count FROM keys", (err,now) => {
+            if(err)
+            {
+                console.error('Error checking keys count', err.message);
+            }
+            else if (row.count === 0)
+            {
+                console.log('No keys found, will generate one...');
+            }
+        })
     }
     });
 }
