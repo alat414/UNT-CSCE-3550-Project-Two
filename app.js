@@ -67,7 +67,8 @@ function authenticateToken(req, res, next)
         if (!decodedHeader)
         {
             console.log('Authentiation failed: Invalid token format');
-            return res.status(401).json({ 
+            return res.status(401).json
+            ({ 
                 error: 'Invalid token',
                 message: 'Token cannot be decoded' 
             });
@@ -87,47 +88,56 @@ function authenticateToken(req, res, next)
 
         console.log(`Authenticating token with key ID: ${keyID}`);
 
-        const signingKey = keyStorage.getKey(keyID);
-
-        if(!signingKey)
+        keyStorage.getKey(keyID).then(signingKey => 
         {
-            console.log(`Authenticating token with key ID: ${keyID}`);
-            return res.status(401).json
-            ({
-                error: 'Key invalid',
-                message: 'Token was signed with invalid key, retry.'
-            });
-        }
-        jwt.verify(token, signingKey, (err, user) => 
-        {
-            if (err)
+            if(!signingKey)
             {
-                if (err.name === 'TokenExpiredError')
-                {
-                    console.log(`Authentication failed: Token expired for key ${keyID}`);
-                    return res.status(403).json
-                    ({ 
-                        error: 'Token Expired',
-                        message: 'Your token has expired. Please login again'
-                    });
-                }
-
-                if (err.name === 'JSONWebTokenError')
-                {
-                    console.log(`Authentication failed: Invalid signature for key ${keyID}`);
-                    return res.status(403).json
-                    ({ 
-                        error: 'Invalid Token',
-                        message: 'Token signature verification failed'
-                    });
-                }
+                console.log(`Authenticating failed with key ID: ${keyID}`);
+                return res.status(401).json
+                ({
+                    error: 'Key invalid',
+                    message: 'Token was signed with invalid key, retry.'
+                });
             }
-            // Token is valid.
-            console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
-            req.user = user;
-            next();
-        });
-    }
+
+            jwt.verify(token, signingKey, (err, user) => 
+            {
+                if (err)
+                {
+                    if (err.name === 'TokenExpiredError')
+                    {
+                        console.log(`Authentication failed: Token expired for key ${keyID}`);
+                        return res.status(403).json
+                        ({ 
+                            error: 'Token Expired',
+                            message: 'Your token has expired. Please login again'
+                        });
+                    }
+
+                    if (err.name === 'JSONWebTokenError')
+                    {
+                        console.log(`Authentication failed: Invalid signature for key ${keyID}`);
+                        return res.status(403).json
+                        ({ 
+                            error: 'Invalid Token',
+                            message: 'Token signature verification failed'
+                        });
+                    }
+                }
+                // Token is valid.
+                console.log(`Authentication successful for user: ${user.name} using key ${keyID}`);
+                req.user = user;
+                next();
+            }).catch(error => 
+            {
+                console.log(`Authentication failed: Invalid signature for key ${keyID}`);
+                return res.status(403).json
+                ({ 
+                    error: 'Internal server error',
+                    message: 'Error processing authentication'
+                });
+            });
+    })
     catch(error)
     {
         console.error('Authentication middleware error failed', error);
