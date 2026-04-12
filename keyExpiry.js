@@ -389,7 +389,7 @@ app.get('/health', async (req, res) =>
             keyCount: allKeys.length,
             activeKeyValid: activeKeyData ? new Date() <= new Date(activeKeyData.expiresIn) : false,
             uptime: process.uptime(),
-            database: 'SQLite (jwks-serverStarted.db)'
+            database: 'SQLite (jwks-server.db)'
         });
         
     } 
@@ -411,21 +411,25 @@ app.get('/health', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.get('/debug-keys', (req, res) =>
+app.get('/debug-keys', async (req, res) =>
 {
-    const rawKeys = [];
-    for(const [id, key] of keyStorage.keys)
+    try 
     {
-        rawKeys.push
-        ({
+        const allKeys = await keyStorage.getAllKeys();
+        const rawKeys = allKeys.map(key => ({
             id: id,
             secretPreview: key.secret.substring(0, 20) + '...',
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
-            isActive: key.isActive
-        });
+            isActive: key.isActive === 1
+        }))
+        res.json(rawKeys);
     }
-    res.json(rawKeys);
+    catch (error) 
+    {
+        console.error('Debug endpoint error', error);
+        res.status(500).json({error: 'Internal server error'});
+    }
 })
 
 /* *************************************************
