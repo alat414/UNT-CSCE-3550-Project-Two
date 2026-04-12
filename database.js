@@ -85,7 +85,13 @@ function closeDatabase()
     });
 }
 
-process.on(SIGTERM, () => 
+process.on('SIGTERM', () => 
+{
+    console.log('SIGTERM signal received: closing database connection... ');
+    closeDatabase();
+});
+
+process.on('SIGINT', () => 
 {
     console.log('SIGTERM signal received: closing database connection... ');
     closeDatabase();

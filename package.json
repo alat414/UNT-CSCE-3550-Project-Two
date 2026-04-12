@@ -37,7 +37,9 @@
   "jest": {
     "testTimeout": 30000,
     "testEnvironment": "node",
-    "testMatch": ["**/testing/**/*.tests.js"],
+    "testMatch": [
+      "**/testing/**/*.tests.js"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 70,
@@ -53,12 +55,17 @@
       "!**/node_modules/**",
       "!**/testing/**"
     ],
-    "coverageReporters": ["text", "html", "lcov"]
+    "coverageReporters": [
+      "text",
+      "html",
+      "lcov"
+    ]
   },
   "dependencies": {
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
