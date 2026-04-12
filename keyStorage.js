@@ -29,34 +29,35 @@ class keyStorage
     * @param  - None
     * @return - None
     ********************************** */
-    async loadActiveKey()
+    async loadActiveKey() 
     {
-        try
+        try 
         {
-            const row = await dbGet(`SELECT kid FROM keys WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') ORDER BY 
-            createdAt DESC LIMIT 1
-            `); 
+            const row = await dbGet(`
+                SELECT kid FROM keys 
+                WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') 
+                ORDER BY createdAt DESC LIMIT 1
+            `);
             
-            if (row)
+            if (row) 
             {
                 this.activeKeyID = row.kid;
                 console.log(`Loaded active key from database: ${this.activeKeyID}`);
-            }
-            else
+            } 
+            else 
             {
-                console.log('No active key found in the database, will generate a key'); 
+                console.log('No active key found in the database, will generate a key');
                 await this.generateNewKey(1);
             }
-            this.intialized = true;
-        }
-        catch (err)
+            this.initialized = true;
+        } 
+        catch (err) 
         {
             console.error('Error loading active key:', err.message);
+            // Generate a key even if there's an error
             await this.generateNewKey(1);
-            this.intialized = true;
-            
+            this.initialized = true;
         }
-        
     }
 
     /* **********************************
