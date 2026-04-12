@@ -127,7 +127,7 @@ class keyStorage
             console.log(`Key ${keyID} set as active`);
             
         } 
-        catch (error) 
+        catch (err) 
         {
             console.error('Error activiating key:', err.message);
             throw err;
