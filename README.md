@@ -1,7 +1,8 @@
-"#UNT-CSCE-Project-One"
+"#UNT-CSCE-Project-Two"
 
 🚀 Project Name
-A RESTful JWKS server that authenticates two users for obtaining login credentials and rejecting those without authentication.
+A RESTful JWKS server that authenticates two users for obtaining login credentials and rejecting those without authentication, with
+SQLite 3 implemented.
 
 The server uses the following: JSON web tokens (JWTs), running on HTTPS 8080, and key ids. Additionally, it includes tests and test suites to ensure the server is free of bugs.
 
@@ -12,8 +13,8 @@ Live Site
 📦 Installation
 Clone the repo and install dependencies:
 
-git clone https://github.com/alat414/UNT-CSCE-3550-Project-One
-cd ProjectOne
+git clone https://github.com/alat414/UNT-CSCE-3550-Project-Two
+cd ProjectTwo
 pip 
 🛠 Usage
 Run the app:
