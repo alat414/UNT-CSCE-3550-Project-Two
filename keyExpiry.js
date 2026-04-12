@@ -81,7 +81,7 @@ app.get('/.well-known/jwks.json', async (req, res) =>
     try 
     {
         const activeKeys = await keyStorage.getActiveKeys();
-        res.json({ key: activeKeys});
+        res.json({ keys: activeKeys});
     } 
     catch (error) 
     {
@@ -252,7 +252,7 @@ app.post('/login', async (req, res) =>
             accessToken: accessToken, 
             refreshToken: refreshToken,
             keyID: activeKeyID,
-            keyExpiresIn: row.expiresIn,
+            keyExpiresIn: keyData.expiresIn,
             tokenExpiresIn: '30 seconds'
         });
 
@@ -305,7 +305,7 @@ app.post('/rotate-keys', async (req, res) =>
         const cleanedCount = await keyStorage.removeExpiredKeys();
         console.log(`Cleaned up keys : ${cleanedCount}`);
 
-        const activeKeyData = await keyStorage.keys.get(keyStorage.activeKeyID);
+        const activeKeyData = await keyStorage.getKeyData(keyStorage.getCurrentKeyID());
 
         res.json
         ({
@@ -346,7 +346,7 @@ app.get('/key-status', async (req, res) =>
         const now = new Date();
 
         const status = allKeys.map(key => ({
-            kid: id,
+            kid: key.kid,
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
             isActive: key.isActive === 1,
@@ -418,7 +418,7 @@ app.get('/debug-keys', async (req, res) =>
     {
         const allKeys = await keyStorage.getAllKeys();
         const rawKeys = allKeys.map(key => ({
-            id: id,
+            id: key.kid,
             secretPreview: key.secret.substring(0, 20) + '...',
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
