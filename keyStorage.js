@@ -66,40 +66,50 @@ class keyStorage
     * @param expiresInDays - Number of days until key expiration
     * @return - Generated key ID
     ********************************** */
-    async generateNewKey(expiresInDays = 1)
+    async generateNewKey(expiresInDays = 1) 
     {
-        const days = Math.max(1, Math.min(30, expiresInDays));
-        const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
-        const secret = crypto.randomBytes(64).toString('hex');
-        const createdAt = new Date().toISOString();
-        const expiresIn = new Date();
-        expiresIn.setDate(expiresIn.getDate() + expiresInDays);
-
-        const keyData =
+        try 
         {
-            id: keyID,
-            secret: secret,
-            createdAt: createdAt,
-            expiresIn: expiresIn.toISOString(),
-            isActive: 1
-        };
-
-        try
-        {
-            await dbRun(`INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
-                VALUES (?, ?, ?, ?, ?)
-                `, [keyData.id], [keyData.secret], [keyData.createdAt], [keyData.expiresIn], [keyData.isActive]);
+            const days = Math.max(1, Math.min(30, expiresInDays));
+            const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+            const secret = crypto.randomBytes(64).toString('hex');
+            const createdAt = new Date().toISOString();
+            const expiresIn = new Date();
+            expiresIn.setDate(expiresIn.getDate() + days);
             
-            console.log(`Generated and saved new key: ${keyID}, expires in ${days} days`); 
+            console.log(`Generating new key with ID: ${keyID}`);
+            console.log(`Secret length: ${secret.length} characters`);
+            console.log(`Created at: ${createdAt}`);
+            console.log(`Expires at: ${expiresIn.toISOString()}`);
+            
+            // Insert into database - FIXED parameter order
+            const query = `
+                INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
+                VALUES (?, ?, ?, ?, ?)
+            `;
+            
+            const params = [
+                keyID,           // kid
+                secret,          // secret
+                createdAt,       // createdAt
+                expiresIn.toISOString(),  // expiresIn
+                1                // isActive
+            ];
+            
+            console.log('Executing INSERT query...');
+            await dbRun(query, params);
+            
+            console.log(`Successfully saved key to database: ${keyID}`);
             await this.setActiveKey(keyID);
             return keyID;
-        }
-        catch (err)
+            
+        } 
+        catch (err) 
         {
-            console.error('Error saving key into database:', err.message);
-            throw err; 
+            console.error('Error saving key to database:', err.message);
+            console.error('Full error object:', err);
+            throw err;
         }
-        
     }
 
     /* **********************************
