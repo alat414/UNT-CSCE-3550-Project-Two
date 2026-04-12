@@ -145,7 +145,7 @@ class keyStorage
     {
         try 
         {
-            const row = await dbGet(`SELECT secret, isActive, expiresIn FROM key WHERE kid = ?`, [keyID]);
+            const row = await dbGet(`SELECT secret, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
             {
                 if(!row)
                 {
@@ -229,7 +229,7 @@ class keyStorage
         {
             const result = await dbRun(`DELETE FROM keys WHERE datetime(expiresIn) <= datetime('now')`);
             const count = result.changes || 0;
-            console.log`(Removed ${count} expired keys)`;
+            console.log(`Removed ${count} expired keys`);
             return count;
         } 
         catch (error) 
@@ -253,7 +253,7 @@ class keyStorage
         {
             const rows = await dbAll(
             `SELECT kid, expiresIn FROM keys 
-            WHERE isActive = 1 AND  datetime(expireIn) > datetime('now')`);
+            WHERE isActive = 1 AND datetime(expireIn) > datetime('now')`);
 
             const activeKeys = rows.maps(row => ({
                 kid: row.kid,
@@ -266,7 +266,7 @@ class keyStorage
             console.log(`Found ${activeKeys.length} active keys for JWKS server`);
             return activeKeys;
         } 
-        catch (error) 
+        catch (err) 
         {
             console.error('Error getting active keys:', err.message);
             return [];       
