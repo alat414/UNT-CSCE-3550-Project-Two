@@ -23,46 +23,47 @@ const VALID_USERS = ['Nanna', 'nanna', 'Raggi', 'raggi'];
 
 app.use(express.json())
 
-keyStorage.generateNewKey(1);
-
 let serverStarted = false;
 
 async function startServer() 
 {
-    while (!keyStorage.intialized)
+    while (!keyStorage.initialized)
     {
+        console.log('Waiting for keyStorage to initialize...');
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        if (!serverStarted)
+        
+    }
+
+    if (!serverStarted)
+    {
+        app.listen(port, () => 
         {
-            app.listen(port, () => 
-            {
-                console.log
-                (`
-                    =====================================================
-                    JWKS Server with Key Rotation
-                    =====================================================
-                    KeyExpiry server running at http://localhost:${port}
-                    Database: jwks-server.test.db
-                    Active Key ID: ${keyStorage.getCurrentKeyID()}
+            console.log
+            (`
+                =====================================================
+                JWKS Server with Key Rotation
+                =====================================================
+                KeyExpiry server running at http://localhost:${port}
+                Database: jwks-server.test.db
+                Active Key ID: ${keyStorage.getCurrentKeyID()}
 
-                    Available endpoints:
-                    -----------------------------------------------------
-                    - GET /.well-known/jwks.json    - Public JWKS endpoint
-                    - GET /health                   - Server health check
-                    - GET /key-status               - Detailed key information
-                    - GET /posts                    - Protected post information(authentication req)
-                    - GET /debug-keys               - Debugging key information (dev only)
+                Available endpoints:
+                -----------------------------------------------------
+                - GET /.well-known/jwks.json    - Public JWKS endpoint
+                - GET /health                   - Server health check
+                - GET /key-status               - Detailed key information
+                - GET /posts                    - Protected post information(authentication req)
+                - GET /debug-keys               - Debugging key information (dev only)
 
-                    - POST /login                   - Authenticate and get tokens
-                    - POST /token                   - Refresh access token
-                    - POST /rotate-keys             - Rotate keys
-                    -----------------------------------------------------
-                `);
-            });
+                - POST /login                   - Authenticate and get tokens
+                - POST /token                   - Refresh access token
+                - POST /rotate-keys             - Rotate keys
+                -----------------------------------------------------
+            `);
+        });
 
-            serverStarted = true;
-        }
+        serverStarted = true;
     }
 }
 /* *************************************************
