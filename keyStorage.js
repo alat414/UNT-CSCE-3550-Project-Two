@@ -33,6 +33,7 @@ class keyStorage
     {
         try 
         {
+            console.log('Loading active key from database...'); 
             const row = await dbGet(`
                 SELECT kid FROM keys 
                 WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') 
@@ -50,6 +51,7 @@ class keyStorage
                 await this.generateNewKey(1);
             }
             this.initialized = true;
+            console.log(`Key storage initialized. Active Key ID: ${this.activeKeyID}`);
         } 
         catch (err) 
         {
@@ -189,11 +191,15 @@ class keyStorage
     * ************************************************* */
     async getCurrentKey()
     {
+        console.log(`Getting current key. Active key ID: ${this.activeKeyID}`);
         if (!this.activeKeyID)
         {
+            console.log('No active keyID set');
             return null;
         }
-        return await this.getKey(this.activeKeyID);
+        const key = await this.getKey(this.activeKeyID);
+        console.log(`Key Found: ${!!key}`);
+        return key;
     }
     /* *************************************************
     * This function returns the current active key ID
