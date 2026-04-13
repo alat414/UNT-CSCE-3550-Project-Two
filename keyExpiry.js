@@ -344,6 +344,7 @@ app.get('/key-status', async (req, res) =>
     {
         const allKeys = await keyStorage.getAllKeys();
         const now = new Date();
+        const currentKeyID = keyStorage.getCurrentKeyID();
 
         const status = allKeys.map(key => ({
             kid: key.kid,
