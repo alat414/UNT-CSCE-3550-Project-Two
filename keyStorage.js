@@ -253,7 +253,7 @@ class keyStorage
         {
             const rows = await dbAll(
             `SELECT kid, expiresIn FROM keys 
-            WHERE isActive = 1 AND datetime(expireIn) > datetime('now')`);
+            WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')`);
 
             const activeKeys = rows.maps(row => ({
                 kid: row.kid,
