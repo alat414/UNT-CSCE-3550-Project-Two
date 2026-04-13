@@ -18,7 +18,7 @@ class keyStorage
     {
         this.keys = new Map();
         this.activeKeyID = null;
-        this.intialized = false;
+        this.initialized = false;
         this.loadActiveKey();
     }
 
@@ -234,7 +234,7 @@ class keyStorage
         } 
         catch (error) 
         {
-            console.error('Error removing expired keys:', err.message);
+            console.error('Error removing expired keys:', error.message);
             return 0;
         }
     }
@@ -255,7 +255,7 @@ class keyStorage
             `SELECT kid, expiresIn FROM keys 
             WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')`);
 
-            const activeKeys = rows.maps(row => ({
+            const activeKeys = rows.map(row => ({
                 kid: row.kid,
                 kty: "oct",
                 alg: "HS256",
@@ -308,7 +308,7 @@ class keyStorage
     {
         try 
         {
-            return await dbAll(`SELECT * FROM keys ORDER BY createdAt DESC`, [keyID]);
+            return await dbAll(`SELECT * FROM keys ORDER BY createdAt DESC`);
         } 
         catch (err) 
         {
