@@ -257,23 +257,23 @@ class keyStorage
     }
 
     /* *************************************************
-    * This function returns the current, active key
-    * via the getkey method. 
+    * This function returns the current, active public key
+    * via the getpublickey method. 
     * 
     * @param  : none
-    * @return : The active key scret or null if no key exists.
+    * @return : The active, public key or null if no key exists.
     * @exception : none
     * @note : na
     * ************************************************* */
-    async getCurrentKey()
+    async getCurrentPublicKey()
     {
-        console.log(`Getting current key. Active key ID: ${this.activeKeyID}`);
+        console.log(`Getting current public key. Active key ID: ${this.activeKeyID}`);
         if (!this.activeKeyID)
         {
             console.log('No active keyID set');
             return null;
         }
-        const key = await this.getKey(this.activeKeyID);
+        const key = await this.getPublicKey(this.activeKeyID);
         console.log(`Key Found: ${!!key}`);
         return key;
     }
