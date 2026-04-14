@@ -328,15 +328,23 @@ class keyStorage
         try 
         {
             const rows = await dbAll(
-            `SELECT kid, expiresIn FROM keys 
+            `SELECT kid, expiresIn, publicKey FROM keys 
             WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')`);
 
-            const activeKeys = rows.map(row => ({
-                kid: row.kid,
-                kty: "oct",
-                alg: "HS256",
-                use: "sig",
-                exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
+            const activeKeys = await Promise.all(rows.map(async (row) => {
+                const key = new NodeRSA(row.publicKey);
+                const keyComponents = key.exportKey('components');
+
+                return {
+                    kid: row.kid,
+                    kty: "RSA",
+                    alg: "RS256",
+                    use: "sig",
+                    n: keyComponents.n.toString('base64'),
+                    e: keyComponents.e.toString('base64'),
+                    exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
+                };
+              
             }));
 
             console.log(`Found ${activeKeys.length} active keys for JWKS server`);
