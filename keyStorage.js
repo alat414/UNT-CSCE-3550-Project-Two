@@ -142,10 +142,12 @@ class keyStorage
         }       
     }
     /* **********************************
-    * Obtain a key from the database.
+    * Obtain a public key from the database.
+    * using SQL query prompts.
+    * 
     * @param keyID - key ID for retrieving
     * @param callback - key ID for retrieving
-    * @return secret - The key secret or null if expired or invalid.
+    * @return secret - The private key or null if expired or invalid.
     ********************************** */
     async getPrivateKey(keyID)
     {
@@ -192,11 +194,11 @@ class keyStorage
     * @param callback - key ID for retrieving
     * @return secret - The key secret or null if expired or invalid.
     ********************************** */
-    async getKey(keyID)
+    async getPublicKey(keyID)
     {
         try 
         {
-            const row = await dbGet(`SELECT privateKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
+            const row = await dbGet(`SELECT publicKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
             {
                 if(!row)
                 {
@@ -221,13 +223,13 @@ class keyStorage
                     return null;
                 }
 
-                console.log(`Retrieved private key for ${keyID} (PKCS1 PEM format)`)
-                return row.secret;
+                console.log(`Retrieved public key for ${keyID} (PKCS1 PEM format)`)
+                return row.publicKey;
             };
         } 
         catch (err) 
         {
-            console.error(`Error retrieving key ${keyID}:`, err.message);
+            console.error(`Error retrieving public key ${keyID}:`, err.message);
             return null;
         }
     }
