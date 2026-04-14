@@ -73,4 +73,4 @@ process.on('SIGINT', () => {
     db.close();
 });
 
-module.exports = db;
+module.exports = {db, onTableReady};
