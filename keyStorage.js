@@ -392,7 +392,7 @@ class keyStorage
     {
         try 
         {
-            return await dbAll(`SELECT * FROM keys ORDER BY createdAt DESC`);
+            return await dbAll(`SELECT kid, createdAt, expiresIn, isActive FROM keys ORDER BY createdAt DESC`);
         } 
         catch (err) 
         {
