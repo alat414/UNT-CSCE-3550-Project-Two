@@ -87,9 +87,9 @@ function authenticateToken(req, res, next)
         console.log(`Authenticating token with key ID: ${keyID}`);
 
         // Async key lookup
-        keyStorage.getKey(keyID).then(signingKey => 
+        keyStorage.getPublicKey(keyID).then(publicKey => 
         {
-            if (!signingKey) {
+            if (!publicKey) {
                 console.log(`Authentication failed: Key ID ${keyID} not found or invalid`);
                 return res.status(401).json
                 ({
@@ -98,7 +98,7 @@ function authenticateToken(req, res, next)
                 });
             }
             
-            jwt.verify(token, signingKey, (err, user) => 
+            jwt.verify(token, publicKey, { algorithms: ['RS256'] } ,(err, user) => 
             {
                 if (err) 
                 {
@@ -136,7 +136,7 @@ function authenticateToken(req, res, next)
             });
         }).catch(error => 
         {
-            console.error('Key lookup error:', error);
+            console.error('Public key lookup error:', error);
             return res.status(500).json({ error: 'Internal server error' });
         });
         
