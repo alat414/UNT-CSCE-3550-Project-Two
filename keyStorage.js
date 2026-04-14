@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const db = require('./database');
+const NodeRSA = require('node-rsa');
 
 const dbGet = promisify(db.get).bind(db);
 const dbRun = promisify(db.run).bind(db);
