@@ -23,7 +23,8 @@ db.serialize(() => {
         }
         db.run(`CREATE TABLE IF NOT EXISTS keys (
             kid TEXT PRIMARY KEY,
-            secret TEXT NOT NULL,
+            privateKey TEXT NOT NULL,
+            publicKey TEXT NOT NULL,
             createdAt TEXT NOT NULL,
             expiresIn TEXT NOT NULL,
             isActive INTEGER NOT NULL DEFAULT 1
@@ -34,7 +35,7 @@ db.serialize(() => {
             } 
             else 
             {
-                console.log('RSA keys table ready');
+                console.log('RSA keys table created successfully with private and public key columns');
             }
         });
     });
