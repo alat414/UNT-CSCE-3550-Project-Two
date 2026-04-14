@@ -15,6 +15,7 @@ const db = new sqlite3.Database(dbPath);
 
 // Create table immediately
 db.serialize(() => {
+    //Remove any existing tables.
     db.run(`DROP TABLE IF EXISTS keys`, (err) => {
         if (err) 
         {
@@ -33,7 +34,7 @@ db.serialize(() => {
             } 
             else 
             {
-                console.log('Keys table ready');
+                console.log('RSA keys table ready');
             }
         });
     });
