@@ -23,7 +23,6 @@ class keyStorage
         this.loadActiveKey();
     }
 
-
     /* **********************************
     * Loading the active key from database 
     * during the server startup.
@@ -64,7 +63,8 @@ class keyStorage
     }
 
     /* **********************************
-    * Generate a new encryption key; passing the new key 
+    * Generate a new encryption RSA pair keys;
+    * passing the new key in PKCS1 PEM format
     * to the database saved. 
     * @param expiresInDays - Number of days until key expiration
     * @return - Generated key ID
@@ -74,14 +74,19 @@ class keyStorage
         try 
         {
             const days = Math.max(1, Math.min(30, expiresInDays));
-            const keyID = `key-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
-            const secret = crypto.randomBytes(64).toString('hex');
+            const keyID = `rsa-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+
+            const key = new NodeRSA({ b: 2048 });
+            const privateKeyPem = key.exportKey('pcks1-private-pem');
+            const publicKeyPem = key.exportKey('pcks1-public-pem');
+
             const createdAt = new Date().toISOString();
             const expiresIn = new Date();
             expiresIn.setDate(expiresIn.getDate() + days);
             
-            console.log(`Generating new key with ID: ${keyID}`);
-            console.log(`Secret length: ${secret.length} characters`);
+            console.log(`Generating new RSA key with ID: ${keyID}`);
+            console.log(`Private key (PCKS1 PEM): ${privateKeyPem.substring(0, 60)}...`);
+            console.log(`Public key (PCKS1 PEM): ${publicKeyPem.substring(0, 60)}...`);
             console.log(`Created at: ${createdAt}`);
             console.log(`Expires at: ${expiresIn.toISOString()}`);
             
