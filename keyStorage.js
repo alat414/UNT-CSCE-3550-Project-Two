@@ -95,7 +95,7 @@ class keyStorage
             // Insert into database - FIXED parameter order
             const query = `
                 INSERT INTO keys (kid, privateKey, publicKey, createdAt, expiresIn, isActive)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
             
             const params = [
