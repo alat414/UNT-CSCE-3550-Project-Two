@@ -77,8 +77,8 @@ class keyStorage
             const keyID = `rsa-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
 
             const key = new NodeRSA({ b: 2048 });
-            const privateKeyPem = key.exportKey('pcks1-private-pem');
-            const publicKeyPem = key.exportKey('pcks1-public-pem');
+            const privateKeyPem = key.exportKey('pkcs1-private-pem');
+            const publicKeyPem = key.exportKey('pkcs1-public-pem');
 
             const createdAt = new Date().toISOString();
             const expiresIn = new Date();
@@ -212,8 +212,6 @@ class keyStorage
                 if (now > expiresIn)
                 {
                     console.log(`Key ${keyID} is expired`);
-
-                    await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID])
                     return null;
                 }
 
