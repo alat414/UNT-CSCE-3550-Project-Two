@@ -15,18 +15,27 @@ const db = new sqlite3.Database(dbPath);
 
 // Create table immediately
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS keys (
-        kid TEXT PRIMARY KEY,
-        secret TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        expiresIn TEXT NOT NULL,
-        isActive INTEGER NOT NULL DEFAULT 1
-    )`, (err) => {
-        if (err) {
-            console.error('Error creating table:', err.message);
-        } else {
-            console.log('Keys table ready');
+    db.run(`DROP TABLE IF EXISTS keys`, (err) => {
+        if (err) 
+        {
+            console.error('Error dropping table:', err.message);
         }
+        db.run(`CREATE TABLE IF NOT EXISTS keys (
+            kid TEXT PRIMARY KEY,
+            secret TEXT NOT NULL,
+            createdAt TEXT NOT NULL,
+            expiresIn TEXT NOT NULL,
+            isActive INTEGER NOT NULL DEFAULT 1
+        )`, (err) => {
+            if (err) 
+            {
+                console.error('Error creating table:', err.message);
+            } 
+            else 
+            {
+                console.log('Keys table ready');
+            }
+        });
     });
 });
 
