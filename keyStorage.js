@@ -147,11 +147,56 @@ class keyStorage
     * @param callback - key ID for retrieving
     * @return secret - The key secret or null if expired or invalid.
     ********************************** */
+    async getPrivateKey(keyID)
+    {
+        try 
+        {
+            const row = await dbGet(`SELECT privateKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
+            {
+                if(!row)
+                {
+                    console.log(`Key ${keyID} not found`);
+                    return null;
+                }
+
+                const now = new Date();
+                const expiresIn = new Date(row.expiresIn);
+
+                if (now > expiresIn)
+                {
+                    console.log(`Key ${keyID} is expired`);
+                    await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID])
+                    return null;
+                }
+
+                if (!row.isActive)
+                {
+                    console.log(`Key ${keyID} is inactive`);
+                    return null;
+                }
+
+                console.log(`Retrieved private key for ${keyID} (PKCS1 PEM format)`)
+                return row.privateKey;
+            };
+        } 
+        catch (err) 
+        {
+            console.error(`Error retrieving key ${keyID}:`, err.message);
+            return null;
+        }
+    }
+
+    /* **********************************
+    * Obtain a key from the database.
+    * @param keyID - key ID for retrieving
+    * @param callback - key ID for retrieving
+    * @return secret - The key secret or null if expired or invalid.
+    ********************************** */
     async getKey(keyID)
     {
         try 
         {
-            const row = await dbGet(`SELECT secret, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
+            const row = await dbGet(`SELECT privateKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
             {
                 if(!row)
                 {
@@ -176,6 +221,7 @@ class keyStorage
                     return null;
                 }
 
+                console.log(`Retrieved private key for ${keyID} (PKCS1 PEM format)`)
                 return row.secret;
             };
         } 
