@@ -13,6 +13,20 @@ console.log(`Connecting to SQLite database at: ${dbPath}`);
 
 const db = new sqlite3.Database(dbPath);
 
+let tableReady = false;
+const readyCallBacks = [];
+
+function onTableReady(callback)
+{
+    if (tableReady)
+    {
+        callback();
+    }
+    else
+    {
+        readyCallBacks.push(callback);
+    }
+}
 // Create table immediately
 db.serialize(() => {
     //Remove any existing tables.
@@ -20,6 +34,10 @@ db.serialize(() => {
         if (err) 
         {
             console.error('Error dropping table:', err.message);
+        }
+        else
+        {
+            console.log('Previous table removed');
         }
         db.run(`CREATE TABLE IF NOT EXISTS keys (
             kid TEXT PRIMARY KEY,
@@ -32,10 +50,13 @@ db.serialize(() => {
             if (err) 
             {
                 console.error('Error creating table:', err.message);
+                process.exit(1);
             } 
             else 
             {
                 console.log('RSA keys table created successfully with private and public key columns');
+                readyCallBacks.forEach(cb => cb());
+                readyCallBacks.length = 0;
             }
         });
     });
