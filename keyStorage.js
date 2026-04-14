@@ -92,25 +92,25 @@ class keyStorage
             
             // Insert into database - FIXED parameter order
             const query = `
-                INSERT INTO keys (kid, secret, createdAt, expiresIn, isActive)
+                INSERT INTO keys (kid, privateKey, publicKey, createdAt, expiresIn, isActive)
                 VALUES (?, ?, ?, ?, ?)
             `;
             
             const params = [
-                keyID,           // kid
-                secret,          // secret
-                createdAt,       // createdAt
+                keyID,                    // kid
+                privateKeyPem,            // private key
+                publicKeyPem,             // public key
+                createdAt,                // createdAt
                 expiresIn.toISOString(),  // expiresIn
-                1                // isActive
+                1                         // isActive
             ];
             
             console.log('Executing INSERT query...');
             await dbRun(query, params);
             
-            console.log(`Successfully saved key to database: ${keyID}`);
+            console.log(`Successfully saved RSA key pair to database: ${keyID}`);
             await this.setActiveKey(keyID);
             return keyID;
-            
         } 
         catch (err) 
         {
