@@ -208,10 +208,10 @@ app.post('/login', async (req, res) =>
 
     try 
     {
-        const currentKey = await keyStorage.getCurrentKey();
+        const privateKey = await keyStorage.getCurrentPrivateKey();
         const activeKeyID = keyStorage.getCurrentKeyID();
         
-        if(!currentKey || !activeKeyID)
+        if(!privateKey || !activeKeyID)
         {
             console.error('Login failed: No active key available');
             return res.status(500).json({ error: 'Server configuration error - No key available' });
@@ -227,13 +227,14 @@ app.post('/login', async (req, res) =>
         const accessToken = jwt.sign
         (
             user,
-            currentKey,
+            privateKey,
             {
                 expiresIn: '30s',
+                algorithm: 'RS256',
                 header: 
                 {
                     kid: activeKeyID,
-                    alg: 'HS256'
+                    alg: 'RS256'
                 }
             }
         );
@@ -253,7 +254,8 @@ app.post('/login', async (req, res) =>
             refreshToken: refreshToken,
             keyID: activeKeyID,
             keyExpiresIn: keyData.expiresIn,
-            tokenExpiresIn: '30 seconds'
+            tokenExpiresIn: '30 seconds',
+            algorithm: 'RS256'
         });
 
     } 
