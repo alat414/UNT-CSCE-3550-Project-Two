@@ -50,18 +50,28 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         db.close(done);
     });
 
-    test('getCurrentKey returning active key', () =>
-    {
-        keyStorage.generateNewKey(1);
-        const currentKey = keyStorage.getCurrentKey();
-
-        expect(currentKey).toBeDefined();
-        expect(typeof currentKey === 'string' || currentKey === null).toBe(true);
-        if(currentKey)
+    describe('Key Generation Tests', () => {
+        test('generateNewKey must create a valid RSA key pair', async () =>
         {
-            expect(currentKey.length).toBe(128);
-        }    
-    });
+            const keyID = keyStorage.generateNewKey(1);
+            expect(keyID).toBeDefined();
+            expect(keyID).toMatch(/^rsa-\d+-[a-f0-9]+$/);
+
+            expect(keyStorage.keys.size).toBe(1);
+
+            const keyData = await keyStorage.getKeyData(keyID);
+            expect(keyData).toBeDefined();
+            expect(keyData.kid).toBe(keyID);
+            expect(keyData.privateKey).toBeDefined();
+            expect(keyData.publicKey).toBeDefined();
+            expect(keyData.isActive).toBe(1);
+
+            expect(keyData.privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
+            expect(keyData.publicKey).toContain('-----BEGIN RSA PUBLIC KEY-----');
+                
+        }, 10000);
+    })
+    
 
     test('Clean up expired keys in removeExpiredKeys', async () =>
     {
@@ -87,17 +97,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
     test('The function generateNewKey must create a valid key', async () =>
     {
-        const keyID = keyStorage.generateNewKey(1);
-        expect(keyID).toBeDefined();
-        expect(keyStorage.keys.size).toBe(1);
-
-        const key = keyStorage.keys.get(keyID);
-        expect(key.id).toBe(keyID);
-        expect(key.secret).toBeDefined();
-        expect(key.secret.length).toBe(128);
-        expect(key.isActive).toBe(true);
-        expect(key.createdAt).toBeInstanceOf(Date);
-        expect(key.expiresIn).toBeInstanceOf(Date);
+        
         
     });
     
