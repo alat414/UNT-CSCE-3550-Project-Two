@@ -8,7 +8,27 @@
 *           keyStorage.tests.js
 ************************************************* */
 
-const keyStorage = require('../../keyStorage'); 
+const keyStorage = require('../../keyStorage');
+const { db } = require('../../database');
+const crypto = require('crypto');
+
+async function clearDatabase()
+{
+    return new Promise((resolve, reject) => 
+    {
+        db.run(`DELETE FROM keys`, (err) => 
+        {
+            if (err)
+            {
+                reject(err);
+            }
+            else
+            {
+                resolve();
+            }
+        });
+    });
+}
 
 describe('KeyStorage Unit tests', () =>
 {
@@ -69,6 +89,34 @@ describe('KeyStorage Unit tests', () =>
         
     });
     
+    test('The function getPrivateKey must create a valid, private key', async () =>
+    {
+        const keyID = keyStorage.getPrivateKey(1);
+        expect(keyID).toBeDefined();
+        expect(keyStorage.keys.size).toBe(1);
+
+        const key = keyStorage.keys.get(keyID);
+        expect(key.id).toBe(keyID);
+        expect(key.isActive).toBe(true);
+        expect(key.createdAt).toBeInstanceOf(Date);
+        expect(key.expiresIn).toBeInstanceOf(Date);
+        
+    });
+
+    test('The function getPublicKey must create a valid, public key', async () =>
+    {
+        const keyID = keyStorage.getPublicKey(1);
+        expect(keyID).toBeDefined();
+        expect(keyStorage.keys.size).toBe(1);
+
+        const key = keyStorage.keys.get(keyID);
+        expect(key.id).toBe(keyID);
+        expect(key.isActive).toBe(true);
+        expect(key.createdAt).toBeInstanceOf(Date);
+        expect(key.expiresIn).toBeInstanceOf(Date);
+        
+    });
+
     test('getKey returning null for an expired key', async () =>
     {
         const keyID = keyStorage.generateNewKey(0.0000001);
