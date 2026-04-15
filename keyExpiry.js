@@ -448,7 +448,7 @@ app.get('/debug-keys', async (req, res) =>
             currentTime: now.toISOString(),
             totalKeys: allKeys.length,
             keys: keyInfo,
-            activeKeyCount: keyInfo.filter(k = k.isActive && !k.isExpired).length
+            activeKeyCount: keyInfo.filter(k => k.isActive && !k.isExpired).length
         });
     }
     catch (error) 

@@ -331,9 +331,9 @@ class keyStorage
             const totalKeys = await dbAll(`SELECT COUNT(*) as count FROM keys`);
             console.log(`Total keys in the database ${totalKeys[0].count}`);
 
-            const allKeyStatus = dbAll(`SELECT kid, isActive, expiresIn, datetime('now') as now FROM keys`);
+            const allKeysStatus = await dbAll(`SELECT kid, isActive, expiresIn, datetime('now') as now FROM keys`);
 
-            console.log('All keys in the database:', allKeyStatus.map(k =>({
+            console.log('All keys in the database:', allKeysStatus.map(k =>({
                 kid : k.kid,                    // kid
                 isActive: k.isActive,            // private key
                 expiresIn: k.expiresIn,             // public key
