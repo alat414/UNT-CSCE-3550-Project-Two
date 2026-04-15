@@ -415,25 +415,22 @@ app.get('/health', async (req, res) =>
 * @exception : none
 * @note : na
 * ************************************************* */
-app.get('/debug-keys', async (req, res) =>
+app.get('/debug-key-status', async (req, res) => 
 {
     try 
     {
         const { db } = require('./database');
-        const allKeys = await new Promise ((resolve, reject) => {
+        
+        // Get all keys
+        const allKeys = await new Promise((resolve, reject) => {
             db.all("SELECT * FROM keys", (err, rows) => {
-                if (err)
-                {
-                    reject(err);
-                }
-                else
-                {
-                    resolve(rows);
-                }
-            })
-        })
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
         
         const now = new Date();
+        
         const keyInfo = allKeys.map(key => ({
             kid: key.kid,
             isActive: key.isActive === 1,
@@ -443,20 +440,19 @@ app.get('/debug-keys', async (req, res) =>
             publicKeyLength: key.publicKey ? key.publicKey.length : 0,
             privateKeyLength: key.privateKey ? key.privateKey.length : 0
         }));
-
+        
         res.json({
             currentTime: now.toISOString(),
             totalKeys: allKeys.length,
             keys: keyInfo,
             activeKeyCount: keyInfo.filter(k => k.isActive && !k.isExpired).length
         });
-    }
+    } 
     catch (error) 
     {
-        console.error('Debug endpoint error', error);
-        res.status(500).json({error: 'Internal server error'});
+        res.status(500).json({ error: error.message });
     }
-})
+});
 
 /* *************************************************
 * This function initalizes the server
