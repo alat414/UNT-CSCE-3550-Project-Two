@@ -30,12 +30,24 @@ async function clearDatabase()
     });
 }
 
-describe('KeyStorage Unit tests', () =>
+describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 {
-    beforeEach(() => 
+    beforeEach(async () => 
     {
-        keyStorage.keys.clear();
+        await clearDatabase();
         keyStorage.activeKeyID = null;
+        keyStorage.initialized = false;
+        await keyStorage.loadActiveKey();
+    });
+
+    afterEach(async () => 
+    {
+        await clearDatabase();
+    });
+
+    afterAll((done) => 
+    {
+        db.close(done);
     });
 
     test('getCurrentKey returning active key', () =>
