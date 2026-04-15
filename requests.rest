@@ -42,4 +42,4 @@ Content-Type: application/json
 }
 
 ### Debug - Displaying entire key objects
-GET http://localhost:8080/debug-keys
+GET http://localhost:8080/debug-key-status

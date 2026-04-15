@@ -323,77 +323,72 @@ class keyStorage
     * @exception : none
     * @note : na
     * ************************************************* */
-   async getActiveKeys()
-{
-    try 
+    async getActiveKeys()
     {
-        console.log('=== getActiveKeys() called ===');
-        
-        // First, check total keys in database
-        const totalKeys = await dbAll(`SELECT COUNT(*) as count FROM keys`);
-        console.log(`Total keys in database: ${totalKeys[0].count}`);
-        
-        // Check all keys with their status
-        const allKeysStatus = await dbAll(`SELECT kid, isActive, expiresIn, datetime('now') as now FROM keys`);
-        console.log('All keys in database:', allKeysStatus.map(k => ({
-            kid: k.kid,
-            isActive: k.isActive,
-            expiresIn: k.expiresIn,
-            now: k.now,
-            isExpired: new Date(k.expiresIn) <= new Date()
-        })));
-        
-        
-        const rows = await dbAll(`
-            SELECT kid, expiresIn, publicKey FROM keys 
-            WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')
-        `);
-        
-        console.log(`Query returned ${rows.length} active, non-expired keys`);
-        
-        if (rows.length === 0) {
-            console.log('No active keys found. Check if:');
-            console.log('1. isActive = 1 for any keys');
-            console.log('2. expiresIn > current time');
-            return [];
-        }
-        
-        const activeKeys = await Promise.all(rows.map(async (row) => {
-            console.log(`Processing key: ${row.kid}`);
-            try {
-                const key = new NodeRSA(row.publicKey);
-                const keyComponents = key.exportKey('components');
-                
-                console.log(`Successfully parsed key ${row.kid}`);
-                
-                return {
-                    kid: row.kid,
-                    kty: "RSA",
-                    alg: "RS256",
-                    use: "sig",
-                    n: keyComponents.n.toString('base64'),
-                    e: keyComponents.e.toString('base64'),
-                    exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
-                };
-            } catch (parseError) {
-                console.error(`Error parsing key ${row.kid}:`, parseError.message);
-                return null;
+        try 
+        {
+            /*
+            console.log('=== getActiveKeys() called ===');
+            
+            // First, check total keys in database
+            const totalKeys = await dbAll(`SELECT COUNT(*) as count FROM keys`);
+            console.log(`Total keys in database: ${totalKeys[0].count}`);
+            
+            // Check all keys with their status
+            const allKeysStatus = await dbAll(`SELECT kid, isActive, expiresIn, datetime('now') as now FROM keys`);
+            console.log('All keys in database:', allKeysStatus.map(k => ({
+                kid: k.kid,
+                isActive: k.isActive,
+                expiresIn: k.expiresIn,
+                now: k.now,
+                isExpired: new Date(k.expiresIn) <= new Date()
+            })));
+            */
+            
+            const rows = await dbAll(`
+                SELECT kid, expiresIn, publicKey FROM keys 
+                WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')
+            `);
+            
+            console.log(`Query returned ${rows.length} active, non-expired keys`);
+            
+            const activeKeys = [];
+
+            for (const row of rows)
+            {
+                console.log(`Processing key: ${row.kid}`);
+                try 
+                {
+                    const publicKey = crypto.createPublicKey(row.publicKey);
+                    const jwk = publicKey.export({ format: 'jwk'});
+                    
+                    activeKeys.push({
+                        kid: row.kid,
+                        kty: "RSA",
+                        alg: "RS256",
+                        use: "sig",
+                        n: jwk.n,
+                        e: jwk.e,
+                        exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
+                    });
+
+                    console.log(`Successfully parsed key ${row.kid}`);
+                } 
+                catch (err) 
+                {
+                    console.error(`Error parsing key ${row.kid}:`, parseError.message);
+                }
             }
-        }));
-        
-        // Filter out any null values from failed parses
-        const validKeys = activeKeys.filter(key => key !== null);
-        
-        console.log(`Found ${validKeys.length} active keys for JWKS server`);
-        return validKeys;
-    } 
-    catch (err) 
-    {
-        console.error('Error getting active keys:', err.message);
-        console.error('Full error:', err);
-        return [];       
+            
+            console.log(`Found ${validKeys.length} active keys for JWKS server`);
+            return activeKeys;
+        } 
+        catch (err) 
+        {
+            console.error('Error getting active keys:', err.message);
+            return [];       
+        }
     }
-}
 
     /* *************************************************
     * This function gets all key data via SQL query prompt
