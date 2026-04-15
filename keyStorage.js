@@ -380,7 +380,7 @@ class keyStorage
                 }
             }
             
-            console.log(`Found ${validKeys.length} active keys for JWKS server`);
+            console.log(`Found ${activeKeys.length} active keys for JWKS server`);
             return activeKeys;
         } 
         catch (err) 
