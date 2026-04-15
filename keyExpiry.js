@@ -419,15 +419,37 @@ app.get('/debug-keys', async (req, res) =>
 {
     try 
     {
-        const allKeys = await keyStorage.getAllKeys();
-        const rawKeys = allKeys.map(key => ({
-            id: key.kid,
-            secretPreview: key.secret.substring(0, 20) + '...',
+        const { db } = require('./database');
+        const allKeys = await new Promise ((resolve, reject) => {
+            db.all("SELECT * FROM keys", (err, rows) => {
+                if (err)
+                {
+                    reject(err);
+                }
+                else
+                {
+                    resolve(rows);
+                }
+            })
+        })
+        
+        const now = new Date();
+        const keyInfo = allKeys.map(key => ({
+            kid: key.kid,
+            isActive: key.isActive === 1,
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
-            isActive: key.isActive === 1
-        }))
-        res.json(rawKeys);
+            isExpired: new Date(key.expiresIn) <= now,
+            publicKeyLength: key.publicKey ? key.publicKey.length : 0,
+            privateKeyLength: key.privateKey ? key.privateKey.length : 0
+        }));
+
+        res.json({
+            currentTime: now.toISOString(),
+            totalKeys: allKeys.length,
+            keys: keyInfo,
+            activeKeyCount: keyInfo.filter(k = k.isActive && !k.isExpired).length
+        });
     }
     catch (error) 
     {
