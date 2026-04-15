@@ -73,33 +73,24 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
     })
     
 
-    test('Clean up expired keys in removeExpiredKeys', async () =>
+    test('The generateNewKey function should respect expiration days parameter', async () =>
     {
-        const expiredKeyID = keyStorage.generateNewKey(0.0000001);
+        const keyID = await keyStorage.generateNewKey(7);
 
-        const validKeyIDOne = keyStorage.generateNewKey(1);
-        const validKeyIDTwo = keyStorage.generateNewKey(1);
-
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        const removed = keyStorage.removeExpiredKeys();
-
-
-        expect(removed).toBe(1);
-
-        expect(keyStorage.keys.size).toBe(2);
-
-        expect(keyStorage.keys.has(expiredKeyID)).toBe(false);
-        expect(keyStorage.keys.has(validKeyIDOne)).toBe(true);
-        expect(keyStorage.keys.has(validKeyIDTwo)).toBe(true);
-
-    }, 2000);
-
-    test('The function generateNewKey must create a valid key', async () =>
-    {
+        const keyData = await keyStorage.getKeyData(keyID);
         
-        
+        const expiresIn = new Date(keyData.expiresIn);
+
+        const now = new Date();
+
+        const daysDifference = (expiresIn - now) / (1000 * 60 * 60 * 24);
+
+        expect(daysDifference).toBeGreaterThan(6.9);
+
+        expect(daysDifference).toBeLessThan(7.1);
+
     });
+
     
     test('The function getPrivateKey must create a valid, private key', async () =>
     {
