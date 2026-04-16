@@ -193,4 +193,32 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         });
     });
     
+    describe('Active Key Management Tests', () => 
+    {
+        test('setActiveKeys must deactivate other keys', async () =>
+        {
+            const keyIDOne = await keyStorage.generateNewKey(1);
+            const keyIDTwo = await keyStorage.generateNewKey(1);
+            const keyIDThree = await keyStorage.generateNewKey(1);
+
+            await keyStorage.setActiveKey(keyIDTwo);
+
+            const keyOne = await keyStorage.getKeyData(keyIDOne);
+            const keyTwo = await keyStorage.getKeyData(keyIDTwo);
+            const keyThree = await keyStorage.getKeyData(keyIDThree);
+
+            expect(keyOne.isActive).toBe(0);
+            expect(keyTwo.isActive).toBe(1);
+            expect(keyThree.isActive).toBe(0);
+
+            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
+
+        });
+        
+        test('getCurrentKeyID should return the active key ID', async () =>
+        {
+            const keyID = await keyStorage.generateNewKey(1);
+            expect(keyStorage.getCurrentKeyID).toBe(keyID);
+        });
+    });
 });
