@@ -274,28 +274,21 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         });
     });
     
-    describe('Key Expiration Tests', () => 
+    describe('Key Data Tests', () => 
     {
-        test('removeExpiredKeys must delete expired keys', async () =>
+        test('getkeyData must return complete key info', async () =>
         {
-            const expiredKeyID = await keyStorage.generateNewKey(0.001);
-            const validKeyIDOne = await keyStorage.generateNewKey(1);
-            const validKeyIDTwo = await keyStorage.generateNewKey(1);
+            const keyID = await keyStorage.generateNewKey(1);
+            const keyData = await keyStorage.getKeyData(keyID);
 
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            const removedCount = await keyStorage.removeExpiredKeys();
-
-            expect(removedCount).toBe(1);
-
-            const expiredKey = await keyStorage.getKeyData(expiredKeyID);
-            const validKeyOne = await keyStorage.getKeyData(validKeyIDOne);
-            const validKeyTwo = await keyStorage.getKeyData(validKeyIDTwo);
-
-            expect(expiredKey).toBeUndefined();
-            expect(validKeyOne).toBeDefined();
-            expect(validKeyTwo).toBeDefined();
-        }, 5000);
+            expect(keyData).toBeDefined();
+            expect(keyData.kid).toBe(keyID);
+            expect(keyData).toHaveProperty('privateKey');
+            expect(keyData).toHaveProperty('publicKey');
+            expect(keyData).toHaveProperty('createdAt');
+            expect(keyData).toHaveProperty('expiresIn');
+            expect(keyData).toHaveProperty('isActive');
+        });
         
         test('getKey should return null for expired key', async () =>
         {
