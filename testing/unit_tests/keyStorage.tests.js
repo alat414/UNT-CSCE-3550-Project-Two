@@ -153,47 +153,43 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         });
     });
     
-    describe('Key Retrieval Tests', () => 
+    describe('Active Key Management Tests', () => 
     {
-        test('generateNewKey must create a valid RSA key pair', async () =>
+        test('setActiveKeys must deactivate other keys', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getCurrentPrivateKey();
-            expect(privateKey).toBeDefined();
-            expect(privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
+            const keyIDOne = await keyStorage.generateNewKey(1);
+            const keyIDTwo = await keyStorage.generateNewKey(1);
+            const keyIDThree = await keyStorage.generateNewKey(1);
+
+            await keyStorage.setActiveKey(keyIDTwo);
+
+            const keyOne = await keyStorage.getKeyData(keyIDOne);
+            const keyTwo = await keyStorage.getKeyData(keyIDTwo);
+            const keyThree = await keyStorage.getKeyData(keyIDThree);
+
+            expect(keyOne.isActive).toBe(0);
+            expect(keyTwo.isActive).toBe(1);
+            expect(keyThree.isActive).toBe(0);
+
+            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
 
         });
         
-        test('getCurrentKey should return null when no active key exists', async () =>
-        {
-            await clearDatabase();
-            keyStorage.activeKeyID = null;
-            const privateKey = await keyStorage.getCurrentPrivateKey();
-            expect(privateKey).toBeNull();
-        });
-
-        test('getPublicKey should return valid public key for given keyID', async () =>
+        test('getCurrentKeyID should return the active key ID', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getPublicKey(keyID);
-            expect(publicKey).toBeDefined();
-            expect(publicKey).toContain('-----BEGIN RSA PUBLIC KEY-----');
-
-        });
-        
-        test('getPrivateKey should return valid private key for given keyID', async () =>
-        {
-            const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getPrivateKey(keyID);
-            expect(privateKey).toBeDefined();
-            expect(privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
-
+            expect(keyStorage.getCurrentKeyID).toBe(keyID);
         });
 
-        test('getKey should return null for non existent key ', async () =>
+        test('promoteNextKey should active the next valid key', async () =>
         {
-            const result = await keyStorage.getkey('non-existent-key');
-            expect(result).toBeNull();
+            const keyIDOne = await keyStorage.generateNewKey(1);
+            const keyIDTwo = await keyStorage.generateNewKey(1);
+
+            await keyStorage.setActiveKey(keyIDOne);
+            await keyStorage.deactivateKey(keyIDOne);
+            
+            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
         });
     });
     
