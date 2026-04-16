@@ -12,6 +12,7 @@ const { app } = require('../../keyExpiry');
 const keyStorage = require('../../keyStorage');
 const jwt = require('jsonwebtoken');
 const { db } = require('../../database');
+const { run } = require('jest');
 
 jest.mock('../../keyStorage',()  => 
 ({
@@ -31,6 +32,16 @@ jest.mock('../../keyStorage',()  =>
     deactivateKey: jest.fn(),
     activeKeyID: null,
     initialized: true
+}));
+
+jest.mock('../../database',()  => 
+({  db:
+    {
+        get: jest.fn(),
+        run: jest.fn(),
+        all: jest.fn(),
+        close: jest.fn(),
+    }   
 }));
 
 describe('keyExpiry.js - Branch Coverage Tests', () =>
