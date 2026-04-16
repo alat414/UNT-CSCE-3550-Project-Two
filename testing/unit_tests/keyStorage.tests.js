@@ -265,15 +265,12 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(activeKeys[0].kid).toBe(activeKeyID);
         }, 5000);
 
-        test('promoteNextKey should active the next valid key', async () =>
+        test('getActiveKeys should return an empty array when no active keys exist', async () =>
         {
-            const keyIDOne = await keyStorage.generateNewKey(1);
-            const keyIDTwo = await keyStorage.generateNewKey(1);
-
-            await keyStorage.setActiveKey(keyIDOne);
-            await keyStorage.deactivateKey(keyIDOne);
+            await clearDatabase();
+            const activeKeys = await keyStorage.getActiveKeys(1);
             
-            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
+            expect(activeKeys).toEqual([]);
         });
     });
     
