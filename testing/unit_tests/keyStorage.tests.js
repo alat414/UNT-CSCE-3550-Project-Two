@@ -50,7 +50,8 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         db.close(done);
     });
 
-    describe('Key Generation Tests', () => {
+    describe('Key Generation Tests', () => 
+    {
         test('generateNewKey must create a valid RSA key pair', async () =>
         {
             const keyID = keyStorage.generateNewKey(1);
@@ -67,46 +68,95 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
             expect(keyData.privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
             expect(keyData.publicKey).toContain('-----BEGIN RSA PUBLIC KEY-----');
-                
+                    
         }, 10000);
-    })
-    
-
-    test('The generateNewKey function should respect expiration days parameter', async () =>
-    {
-        const keyID = await keyStorage.generateNewKey(7);
-
-        const keyData = await keyStorage.getKeyData(keyID);
         
-        const expiresIn = new Date(keyData.expiresIn);
+        
 
-        const now = new Date();
+        test('The generateNewKey function should respect expiration days parameter', async () =>
+        {
+            const keyID = await keyStorage.generateNewKey(7);
 
-        const daysDifference = (expiresIn - now) / (1000 * 60 * 60 * 24);
+            const keyData = await keyStorage.getKeyData(keyID);
+            
+            const expiresIn = new Date(keyData.expiresIn);
 
-        expect(daysDifference).toBeGreaterThan(6.9);
+            const now = new Date();
 
-        expect(daysDifference).toBeLessThan(7.1);
+            const daysDifference = (expiresIn - now) / (1000 * 60 * 60 * 24);
 
+            expect(daysDifference).toBeGreaterThan(6.9);
+
+            expect(daysDifference).toBeLessThan(7.1);
+
+        });
+
+        
+        test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
+        {
+            const keyIDOne = await keyStorage.generateNewKey(0);
+            const keyDataOne = await keyStorage.getKeyData(keyIDOne);
+            const expiresInOne = new Date(keyIDOne.expiresIn);
+            const now = new Date();
+            const daysDifferenceOne = (expiresInOne - now) / (1000 * 60 * 60 * 24);
+            expect(daysDifferenceOne).toBeGreaterThanOrEqual(0.9);
+
+            const keyIDTwo = await keyStorage.generateNewKey(365);
+            const keyDataTwo = await keyStorage.getKeyData(keyIDTwo);
+            const expiresInTwo = new Date(keyIDTwo.expiresIn);
+            const daysDifferenceTwo = (expiresInTwo - now) / (1000 * 60 * 60 * 24);
+            expect(daysDifferenceTwo).toBeLessThanOrEqual(30.1);
+        });
     });
 
-    
-    test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
+    describe('Key Retrieval Tests', () => 
     {
-        const keyIDOne = await keyStorage.generateNewKey(0);
-        const keyDataOne = await keyStorage.getKeyData(keyIDOne);
-        const expiresInOne = new Date(keyIDOne.expiresIn);
-        const now = new Date();
-        const daysDifferenceOne = (expiresInOne - now) / (1000 * 60 * 60 * 24);
-        expect(daysDifferenceOne).toBeGreaterThanOrEqual(0.9);
+        test('generateNewKey must create a valid RSA key pair', async () =>
+        {
+            const keyID = await keyStorage.generateNewKey(1);
+            const keyData = await keyStorage.getCurrentPrivateKey();
+            expect(privateKey).toBeDefined();
+            expect(privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
 
-        const keyIDTwo = await keyStorage.generateNewKey(365);
-        const keyDataTwo = await keyStorage.getKeyData(keyIDTwo);
-        const expiresInTwo = new Date(keyIDTwo.expiresIn);
-        const daysDifferenceTwo = (expiresInTwo - now) / (1000 * 60 * 60 * 24);
-        expect(daysDifferenceTwo).toBeLessThanOrEqual(30.1);
+        });
+        
+        
+
+        test('The generateNewKey function should respect expiration days parameter', async () =>
+        {
+            const keyID = await keyStorage.generateNewKey(7);
+
+            const keyData = await keyStorage.getKeyData(keyID);
+            
+            const expiresIn = new Date(keyData.expiresIn);
+
+            const now = new Date();
+
+            const daysDifference = (expiresIn - now) / (1000 * 60 * 60 * 24);
+
+            expect(daysDifference).toBeGreaterThan(6.9);
+
+            expect(daysDifference).toBeLessThan(7.1);
+
+        });
+
+        
+        test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
+        {
+            const keyIDOne = await keyStorage.generateNewKey(0);
+            const keyDataOne = await keyStorage.getKeyData(keyIDOne);
+            const expiresInOne = new Date(keyIDOne.expiresIn);
+            const now = new Date();
+            const daysDifferenceOne = (expiresInOne - now) / (1000 * 60 * 60 * 24);
+            expect(daysDifferenceOne).toBeGreaterThanOrEqual(0.9);
+
+            const keyIDTwo = await keyStorage.generateNewKey(365);
+            const keyDataTwo = await keyStorage.getKeyData(keyIDTwo);
+            const expiresInTwo = new Date(keyIDTwo.expiresIn);
+            const daysDifferenceTwo = (expiresInTwo - now) / (1000 * 60 * 60 * 24);
+            expect(daysDifferenceTwo).toBeLessThanOrEqual(30.1);
+        });
     });
-
     test('The function getPublicKey must create a valid, public key', async () =>
     {
         const keyID = keyStorage.getPublicKey(1);
