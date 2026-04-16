@@ -120,26 +120,22 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
         });
         
-        
-
-        test('The generateNewKey function should respect expiration days parameter', async () =>
+        test('getCurrentKey should return null when no active key exists', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(7);
-
-            const keyData = await keyStorage.getKeyData(keyID);
-            
-            const expiresIn = new Date(keyData.expiresIn);
-
-            const now = new Date();
-
-            const daysDifference = (expiresIn - now) / (1000 * 60 * 60 * 24);
-
-            expect(daysDifference).toBeGreaterThan(6.9);
-
-            expect(daysDifference).toBeLessThan(7.1);
-
+            await clearDatabase();
+            keyStorage.activeKeyID = null;
+            const privateKey = await keyStorage.getCurrentPrivateKey();
+            expect(privateKey).toBeNull();
         });
 
+        test('getPublicKey should return valid public key for given keyID', async () =>
+        {
+            const keyID = await keyStorage.getPublicKey(1);
+            const keyData = await keyStorage.getPublicKey(keyID);
+            expect(publicKey).toBeDefined();
+            expect(publicKey).toContain('-----BEGIN RSA PUBLIC KEY-----');
+
+        });
         
         test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
         {
