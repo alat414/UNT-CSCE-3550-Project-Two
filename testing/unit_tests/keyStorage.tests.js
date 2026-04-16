@@ -305,7 +305,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
     describe('Key Deactivation Tests', () => 
     {
-        test('getkeyData must return complete key info', async () =>
+        test('deactivateKey should mark the key as inactive', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
 
@@ -316,16 +316,14 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(keyData.isActive).toBe(0);
         });
         
-        test('getAllKeys should return all keys in the database', async () =>
+        test('deactivating the key should passing the next key', async () =>
         {
-            await keyStorage.generateNewKey(1);
-            await keyStorage.generateNewKey(1);
-            await keyStorage.generateNewKey(1)
+            const keyIDOne = await keyStorage.generateNewKey(1);
+            const keyIDTwo = await keyStorage.generateNewKey(1);
 
-            const allKeys = await keyStorage.getAllKeys();
+            await keyStorage.deactivateKey(keyIDOne)
 
-            expect(allKeys).toBeInstanceOf(Array);
-            expect(allKeys.length).toBe(3);
+            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
         });
     });
 });
