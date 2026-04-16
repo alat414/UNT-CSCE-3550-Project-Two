@@ -216,10 +216,14 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(validKeyTwo).toBeDefined();
         }, 5000);
         
-        test('getCurrentKeyID should return the active key ID', async () =>
+        test('getKey should return null for expired key', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(1);
-            expect(keyStorage.getCurrentKeyID).toBe(keyID);
+            const keyID = await keyStorage.generateNewKey(0.001);
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const privateKey = await keyStorage.getPrivateKey(keyID);
+            expect(privateKey).toBeNull();
         });
     });
 });
