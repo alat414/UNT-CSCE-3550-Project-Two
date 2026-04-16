@@ -24,14 +24,14 @@
     "start": "node keyExpiry.js",
     "dev": "nodemon keyExpiry.js",
     "dev:app": "nodemon app.js",
-    "test": "jest",
-    "test:unit": "jest testing/unit_tests",
+    "test": "jest --coverage",
+    "test:unit": "jest testing/unit_tests --coverage",
     "test:integration": "jest testing/integration_tests",
     "test:auth": "jest testing/integration_tests/authentication-flow.tests.js",
     "test:keys": "jest testing/integration_tests/key-rotation.tests.js",
     "test:expiry": "jest testing/integration_tests/token-expiry.tests.js",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage --coverageReporters=text",
     "test:ci": "jest --ci --coverage --maxWorkers=2"
   },
   "jest": {
@@ -42,10 +42,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 70,
-        "functions": 70,
-        "lines": 70,
-        "statements": 70
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
       }
     },
     "collectCoverageFrom": [
