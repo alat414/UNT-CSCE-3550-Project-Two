@@ -249,11 +249,21 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(jwksKey).toHaveProperty('exp');
         });
         
-        test('getCurrentKeyID should return the active key ID', async () =>
+        test('getActiveKeys should return only active, non expired keys', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(1);
-            expect(keyStorage.getCurrentKeyID).toBe(keyID);
-        });
+            await keyStorage.generateNewKey(0.001);
+
+            const activeKeyID = await keyStorage.generateNewKey(1);
+
+            await new Promise (resolve => setTimeout(resolve, 100));
+
+            await keyStorage.removeExpiredKeys();
+
+            const activeKeys = await keyStorage.getActiveKeys();
+
+            expect(activeKeys.length).toBe(1);
+            expect(activeKeys[0].kid).toBe(activeKeyID);
+        }, 5000);
 
         test('promoteNextKey should active the next valid key', async () =>
         {
