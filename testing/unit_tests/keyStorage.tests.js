@@ -30,7 +30,7 @@ async function clearDatabase()
     });
 }
 
-describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
+describe('KeyStorage Unit tests - RSA PKCS1 PEM', () =>
 {
     beforeEach(async () => 
     {
@@ -54,7 +54,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
     {
         test('generateNewKey must create a valid RSA key pair', async () =>
         {
-            const keyID = keyStorage.generateNewKey(1);
+            const keyID = await keyStorage.generateNewKey(1);
             expect(keyID).toBeDefined();
             expect(keyID).toMatch(/^rsa-\d+-[a-f0-9]+$/);
 
@@ -92,18 +92,19 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         });
 
         
-        test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
+        test('generateNewKey should clamp the expiration between 1 to 30 days', async () =>
         {
             const keyIDOne = await keyStorage.generateNewKey(0);
             const keyDataOne = await keyStorage.getKeyData(keyIDOne);
-            const expiresInOne = new Date(keyIDOne.expiresIn);
+
+            const expiresInOne = new Date(keyDataOne.expiresIn);
             const now = new Date();
             const daysDifferenceOne = (expiresInOne - now) / (1000 * 60 * 60 * 24);
             expect(daysDifferenceOne).toBeGreaterThanOrEqual(0.9);
 
             const keyIDTwo = await keyStorage.generateNewKey(365);
             const keyDataTwo = await keyStorage.getKeyData(keyIDTwo);
-            const expiresInTwo = new Date(keyIDTwo.expiresIn);
+            const expiresInTwo = new Date(keyDataTwo.expiresIn);
             const daysDifferenceTwo = (expiresInTwo - now) / (1000 * 60 * 60 * 24);
             expect(daysDifferenceTwo).toBeLessThanOrEqual(30.1);
         });
@@ -111,10 +112,10 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
     describe('Key Retrieval Tests', () => 
     {
-        test('generateNewKey must create a valid RSA key pair', async () =>
+        test('getCurrentPrivateKey must create a valid private key', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getCurrentPrivateKey();
+            await keyStorage.generateNewKey(1);
+            const privateKey = await keyStorage.getCurrentPrivateKey();
             expect(privateKey).toBeDefined();
             expect(privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
 
@@ -131,7 +132,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         test('getPublicKey should return valid public key for given keyID', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getPublicKey(keyID);
+            const publicKey = await keyStorage.getPublicKey(keyID);
             expect(publicKey).toBeDefined();
             expect(publicKey).toContain('-----BEGIN RSA PUBLIC KEY-----');
 
@@ -148,14 +149,14 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
         test('getKey should return null for non existent key ', async () =>
         {
-            const result = await keyStorage.getkey('non-existent-key');
+            const result = await keyStorage.getKey('non-existent-key');
             expect(result).toBeNull();
         });
     });
     
     describe('Active Key Management Tests', () => 
     {
-        test('setActiveKeys must deactivate other keys', async () =>
+        test('setActiveKey must deactivate other keys', async () =>
         {
             const keyIDOne = await keyStorage.generateNewKey(1);
             const keyIDTwo = await keyStorage.generateNewKey(1);
@@ -178,10 +179,10 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         test('getCurrentKeyID should return the active key ID', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
-            expect(keyStorage.getCurrentKeyID).toBe(keyID);
+            expect(keyStorage.getCurrentKeyID()).toBe(keyID);
         });
 
-        test('promoteNextKey should active the next valid key', async () =>
+        test('promoteNextKey should activate the next valid key', async () =>
         {
             const keyIDOne = await keyStorage.generateNewKey(1);
             const keyIDTwo = await keyStorage.generateNewKey(1);
@@ -244,7 +245,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(jwksKey).toHaveProperty('kty', 'RSA');
             expect(jwksKey).toHaveProperty('alg', 'RS256');
             expect(jwksKey).toHaveProperty('use', 'sig');
-            expect(jwksKey).toHaveProperty('n',);
+            expect(jwksKey).toHaveProperty('n');
             expect(jwksKey).toHaveProperty('e');
             expect(jwksKey).toHaveProperty('exp');
         });
@@ -268,7 +269,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         test('getActiveKeys should return an empty array when no active keys exist', async () =>
         {
             await clearDatabase();
-            const activeKeys = await keyStorage.getActiveKeys(1);
+            const activeKeys = await keyStorage.getActiveKeys();
             
             expect(activeKeys).toEqual([]);
         });
@@ -276,7 +277,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
     
     describe('Key Data Tests', () => 
     {
-        test('getkeyData must return complete key info', async () =>
+        test('getKeyData must return complete key info', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
             const keyData = await keyStorage.getKeyData(keyID);
@@ -294,7 +295,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         {
             await keyStorage.generateNewKey(1);
             await keyStorage.generateNewKey(1);
-            await keyStorage.generateNewKey(1)
+            await keyStorage.generateNewKey(1);
 
             const allKeys = await keyStorage.getAllKeys();
 
@@ -316,7 +317,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(keyData.isActive).toBe(0);
         });
         
-        test('deactivating the key should passing the next key', async () =>
+        test('deactivating the key should promote the next key', async () =>
         {
             const keyIDOne = await keyStorage.generateNewKey(1);
             const keyIDTwo = await keyStorage.generateNewKey(1);
