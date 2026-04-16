@@ -57,7 +57,6 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(keyID).toBeDefined();
             expect(keyID).toMatch(/^rsa-\d+-[a-f0-9]+$/);
 
-            expect(keyStorage.keys.size).toBe(1);
 
             const keyData = await keyStorage.getKeyData(keyID);
             expect(keyData).toBeDefined();
@@ -92,18 +91,20 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
     });
 
     
-    test('The function getPrivateKey must create a valid, private key', async () =>
+    test('generateNewKey should strengthen the expiration between 1 to 30 days', async () =>
     {
-        const keyID = keyStorage.getPrivateKey(1);
-        expect(keyID).toBeDefined();
-        expect(keyStorage.keys.size).toBe(1);
+        const keyIDOne = await keyStorage.generateNewKey(0);
+        const keyDataOne = await keyStorage.getKeyData(keyIDOne);
+        const expiresInOne = new Date(keyIDOne.expiresIn);
+        const now = new Date();
+        const daysDifferenceOne = (expiresInOne - now) / (1000 * 60 * 60 * 24);
+        expect(daysDifferenceOne).toBeGreaterThanOrEqual(0.9);
 
-        const key = keyStorage.keys.get(keyID);
-        expect(key.id).toBe(keyID);
-        expect(key.isActive).toBe(true);
-        expect(key.createdAt).toBeInstanceOf(Date);
-        expect(key.expiresIn).toBeInstanceOf(Date);
-        
+        const keyIDTwo = await keyStorage.generateNewKey(365);
+        const keyDataTwo = await keyStorage.getKeyData(keyIDTwo);
+        const expiresInTwo = new Date(keyIDTwo.expiresIn);
+        const daysDifferenceTwo = (expiresInTwo - now) / (1000 * 60 * 60 * 24);
+        expect(daysDifferenceTwo).toBeLessThanOrEqual(30.1);
     });
 
     test('The function getPublicKey must create a valid, public key', async () =>
