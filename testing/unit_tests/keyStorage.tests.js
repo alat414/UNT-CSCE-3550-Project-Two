@@ -193,27 +193,28 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
         });
     });
     
-    describe('Active Key Management Tests', () => 
+    describe('Key Expiration Tests', () => 
     {
-        test('setActiveKeys must deactivate other keys', async () =>
+        test('removeExpiredKeys must delete expired keys', async () =>
         {
-            const keyIDOne = await keyStorage.generateNewKey(1);
-            const keyIDTwo = await keyStorage.generateNewKey(1);
-            const keyIDThree = await keyStorage.generateNewKey(1);
+            const expiredKeyID = await keyStorage.generateNewKey(0.001);
+            const validKeyIDOne = await keyStorage.generateNewKey(1);
+            const validKeyIDTwo = await keyStorage.generateNewKey(1);
 
-            await keyStorage.setActiveKey(keyIDTwo);
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-            const keyOne = await keyStorage.getKeyData(keyIDOne);
-            const keyTwo = await keyStorage.getKeyData(keyIDTwo);
-            const keyThree = await keyStorage.getKeyData(keyIDThree);
+            const removedCount = await keyStorage.removeExpiredKeys();
 
-            expect(keyOne.isActive).toBe(0);
-            expect(keyTwo.isActive).toBe(1);
-            expect(keyThree.isActive).toBe(0);
+            expect(removedCount).toBe(1);
 
-            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
+            const expiredKey = await keyStorage.getKeyData(expiredKeyID);
+            const validKeyOne = await keyStorage.getKeyData(validKeyIDOne);
+            const validKeyTwo = await keyStorage.getKeyData(validKeyIDTwo);
 
-        });
+            expect(expiredKey).toBeUndefined();
+            expect(validKeyOne).toBeDefined();
+            expect(validKeyTwo).toBeDefined();
+        }, 5000);
         
         test('getCurrentKeyID should return the active key ID', async () =>
         {
