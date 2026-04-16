@@ -302,4 +302,33 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(allKeys.length).toBe(3);
         });
     });
+    
+    describe('Key Data Tests', () => 
+    {
+        test('getkeyData must return complete key info', async () =>
+        {
+            const keyID = await keyStorage.generateNewKey(1);
+            const keyData = await keyStorage.getKeyData(keyID);
+
+            expect(keyData).toBeDefined();
+            expect(keyData.kid).toBe(keyID);
+            expect(keyData).toHaveProperty('privateKey');
+            expect(keyData).toHaveProperty('publicKey');
+            expect(keyData).toHaveProperty('createdAt');
+            expect(keyData).toHaveProperty('expiresIn');
+            expect(keyData).toHaveProperty('isActive');
+        });
+        
+        test('getAllKeys should return all keys in the database', async () =>
+        {
+            await keyStorage.generateNewKey(1);
+            await keyStorage.generateNewKey(1);
+            await keyStorage.generateNewKey(1)
+
+            const allKeys = await keyStorage.getAllKeys();
+
+            expect(allKeys).toBeInstanceOf(Array);
+            expect(allKeys.length).toBe(3);
+        });
+    });
 });
