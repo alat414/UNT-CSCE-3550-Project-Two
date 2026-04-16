@@ -11,22 +11,27 @@ const request = require('supertest');
 const { app } = require('../../keyExpiry'); 
 const keyStorage = require('../../keyStorage');
 const jwt = require('jsonwebtoken');
+const { db } = require('../../database');
 
 jest.mock('../../keyStorage',()  => 
-    ({
-        generateNewKey: jest.fn(),
-        getCurrentKey: jest.fn(),
-        getCurrentKeyID: jest.fn(),
-        getKey: jest.fn(),
-        removeExpiredKeys: jest.fn(),
-        keys:
-        {
-            size: 0,
-            values: jest.fn().mockReturnValue([]),
-            [Symbol.iterator]: jest.fn().mockReturnValue([])
-        },
-        activeKeyID: null
-    }));
+({
+    generateNewKey: jest.fn(),
+    getCurrentKey: jest.fn(),
+    getCurrentKeyID: jest.fn(),
+    getCurrentPrivateKey: jest.fn(),
+    getCurrentPublicKey: jest.fn(),
+    getPrivateKey: jest.fn(),
+    getPublicKey: jest.fn(),
+    getKey: jest.fn(),
+    getKeyData: jest.fn(),
+    removeExpiredKeys: jest.fn(),
+    getActiveKeys: jest.fn(),
+    getAllKeys: jest.fn(),
+    setActiveKey: jest.fn(),
+    deactivateKey: jest.fn(),
+    activeKeyID: null,
+    initialized: true
+}));
 
 describe('keyExpiry.js - Branch Coverage Tests', () =>
 {
