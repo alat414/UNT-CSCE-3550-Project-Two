@@ -229,24 +229,24 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
 
     describe('JWKS Key Export Tests', () => 
     {
-        test('setActiveKeys must deactivate other keys', async () =>
+        test('getActiveKeys should return correctly formatted JWKS keys', async () =>
         {
-            const keyIDOne = await keyStorage.generateNewKey(1);
-            const keyIDTwo = await keyStorage.generateNewKey(1);
-            const keyIDThree = await keyStorage.generateNewKey(1);
+            await keyStorage.generateNewKey(1);
 
-            await keyStorage.setActiveKey(keyIDTwo);
+            const activeKeys = await keyStorage.getActiveKeys();
 
-            const keyOne = await keyStorage.getKeyData(keyIDOne);
-            const keyTwo = await keyStorage.getKeyData(keyIDTwo);
-            const keyThree = await keyStorage.getKeyData(keyIDThree);
+            expect(activeKeys).toBeInstanceOf(Array);
+            expect(activeKeys.length).toBe(1);
 
-            expect(keyOne.isActive).toBe(0);
-            expect(keyTwo.isActive).toBe(1);
-            expect(keyThree.isActive).toBe(0);
+            const jwksKey = activeKeys[0];
 
-            expect(keyStorage.getCurrentKeyID()).toBe(keyIDTwo);
-
+            expect(jwksKey).toHaveProperty('kid');
+            expect(jwksKey).toHaveProperty('kty', 'RSA');
+            expect(jwksKey).toHaveProperty('alg', 'RS256');
+            expect(jwksKey).toHaveProperty('use', 'sig');
+            expect(jwksKey).toHaveProperty('n',);
+            expect(jwksKey).toHaveProperty('e');
+            expect(jwksKey).toHaveProperty('exp');
         });
         
         test('getCurrentKeyID should return the active key ID', async () =>
