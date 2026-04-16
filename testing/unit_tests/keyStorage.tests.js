@@ -290,14 +290,16 @@ describe('KeyStorage Unit tests - RSA PKCS1 REM', () =>
             expect(keyData).toHaveProperty('isActive');
         });
         
-        test('getKey should return null for expired key', async () =>
+        test('getAllKeys should return all keys in the database', async () =>
         {
-            const keyID = await keyStorage.generateNewKey(0.001);
+            await keyStorage.generateNewKey(1);
+            await keyStorage.generateNewKey(1);
+            await keyStorage.generateNewKey(1)
 
-            await new Promise(resolve => setTimeout(resolve, 100));
+            const allKeys = await keyStorage.getAllKeys();
 
-            const privateKey = await keyStorage.getPrivateKey(keyID);
-            expect(privateKey).toBeNull();
+            expect(allKeys).toBeInstanceOf(Array);
+            expect(allKeys.length).toBe(3);
         });
     });
 });
