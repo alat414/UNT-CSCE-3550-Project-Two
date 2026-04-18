@@ -30,6 +30,7 @@ jest.mock('../../keyStorage',()  =>
     getAllKeys: jest.fn(),
     setActiveKey: jest.fn(),
     deactivateKey: jest.fn(),
+    getKeyData: jest.fn(),
     activeKeyID: null,
     initialized: true
 }));
