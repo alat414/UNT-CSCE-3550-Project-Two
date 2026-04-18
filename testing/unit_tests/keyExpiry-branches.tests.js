@@ -57,11 +57,25 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         consoleLogSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        keyStorage.getCurrentPrivateKey.mockResolvedValue('-----BEGIN RSA PRIVATE KEY-----\nmock-private-key\n-----END RSA PRIVATE KEY-----');
+        const mockPrivateKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAokYPxwi90/SFvu6TL\n-----END RSA PRIVATE KEY-----';
+        const mockPublicKey = '-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAokYPxwi90/SFvu6TL\n-----END RSA PUBLIC KEY-----';
+
+        const mockKeyData = {
+            kid: 'test-rsa-key-id',
+            privateKey: mockPrivateKey,
+            publicKey: mockPublicKey,
+            createdAt: new Date().toISOString(),
+            expiresIn: new Date(Date.now() + 86400000).toISOString(),
+            isActive: 1
+        };
+
+        keyStorage.getCurrentPrivateKey.mockResolvedValue(mockPrivateKey);
+        keyStorage.getCurrentPublicKey.mockResolvedValue(mockPublicKey);
         keyStorage.getCurrentKeyID.mockReturnValue('test-rsa-key-id');
-        keyStorage.getCurrentKey.mockResolvedValue('mock-private-key');
+        keyStorage.getCurrentKey.mockResolvedValue(mockPrivateKey);
         keyStorage.generateNewKey.mockResolvedValue('new-rsa-key-id');
         keyStorage.removeExpiredKeys.mockResolvedValue(0);
+        keyStorage.getKeyData.mockResolvedValue(mockKeyData);
         keyStorage.getActiveKeys.mockResolvedValue([
             {
                 kid:'test-rsa-key-id',
@@ -73,15 +87,17 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 exp: Math.floor(Date.now() / 1000) + 86400
             }
         ]);
-
-        keyStorage.getAllKeys.mockResolvedValue([]);
-        keyStorage.getKeyData.mockResolvedValue({
+        keyStorage.getAllKeys.mockResolvedValue({
             kid: 'test-rsa-key-id',
-            privateKey: 'mock-private-key',
-            publicKey: 'mock-public-key',
-            isActive: 1,
-            expiresIn: new Date(Date.now() + 86400000).toISOString()
+            privateKey: mockPrivateKey,
+            publicKey: mockPublicKey,
+            createdAt: new Date().toISOString(),
+            expiresIn: new Date(Date.now() + 86400000).toISOString(),
+            isActive: 1
         });
+        keyStorage.getPrivateKey.mockResolvedValue(mockPrivateKey);
+        keyStorage.getPublicKey.mockResolvedValue(mockPublicKey);
+        keyStorage.getKey.mockResolvedValue(mockPrivateKey);
     });
 
     afterEach(() => {
@@ -99,7 +115,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
             expect(response.body).toHaveProperty('status', 'OK');
             expect(response.body).toHaveProperty('timestamp');
-            expect(response.body).toHaveProperty('activeKeyID');
+            expect(response.body).toHaveProperty('activeKeyID', 'test-rsa-key-id');
             expect(response.body).toHaveProperty('keyCount');
             expect(response.body).toHaveProperty('activeKeyValid');
             expect(response.body).toHaveProperty('uptime');
