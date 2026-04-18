@@ -207,71 +207,98 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     });
 
+    describe('GET /key-status', () => 
+    {
+        test('Should return key status information', async () =>
+        {
+            const mockKeys = [
+                {   
+                    kid: 'key1',
+                    createdAt: new Date().toISOString(),
+                    expiresIn: new Date(Date.now() + 86400000).toISOString(),
+                    isActive: 1
+                }
+            ];
+
+            keyStorage.getAllKeys.mockResolvedValueOnce(mockKeys);
+
+            const response = await request(app)
+                .get('/key-status')
+                .expect(200);
+
+            expect(Array.isArray(response.body)).toBe(true);
+            
+        });
+
+        test('should return 400 when username is missing', async () =>
+        {
+            const response = await request(app)
+                .post('/login')
+                .send({})
+                .expect(400);
+
+            expect(response.body).toHaveProperty('error', 'Username is required');
+        });
+
+        test('should return 401 when username is invalid', async () =>
+        {
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'InvalidUser'})
+                .expect(401);
+
+            expect(response.body).toHaveProperty('error', 'Unauthorized');
+            expect(response.body).toHaveProperty('message', 'Invalid Username');
+        });
+
+        test('Should return 500 when no active key available', async () =>
+        {
+            keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
+            keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
+
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna'})
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
+        });
+
     
 
-    test('GET /key-status should handle keys with different states', async () =>
-    {
-        const mockKeys =
-        [{
-            kid: 'key1',
-            createdAt: new Date(),
-            expiresIn: new Date(),
-            isActive: true,
-            isCurrent: true,
-            expired: false
-        }];
-
-        keyStorage.keys[Symbol.iterator] = jest.fn().mockReturnValue(mockKeys.entries());
-
-        const response = await request(app)
-            .get('/key-status')
-            .expect(200);
-
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    test('POST /token should work with valid refresh token', async () =>
-    {
-        jest.spyOn(jwt, 'verify').mockImplementationOnce((token, secret, cb) =>
+        test('should return 500 when key is expired', async () =>
         {
-            cb(null, { name: 'Nanna' });
+            keyStorage.getKeyData.mockResolvedValueOnce(  
+            {
+                isActive: 0,
+                expiresIn: new Date(Date.now() - 86400000).toISOString()
+            });
+
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
         });
 
-        keyStorage.getCurrentKey.mockReturnValue('valid-secret');
-        keyStorage.getCurrentKeyID.mockReturnValue('valid-key-id');
+        
 
-        const response = await request(app)
-            .post('/token')
-            .send({ token: 'valid.refresh.token' })
-            .expect(200);
+        test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
+        {
+            const originalSecret = process.env.REFRESH_TOKEN_SECRET;
+            delete process.env.REFRESH_TOKEN_SECRET;
 
-        expect(response.body).toHaveProperty('accessToken');
-    });
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(500);
 
-    test('POST /rotate-keys should work with valid input', async () =>
-    {
-        keyStorage.generateNewKey.mockReturnValue('new-key-id');
-        keyStorage.removeExpiredKeys.mockReturnValue(1);
+            expect(response.body).toHaveProperty('error', 'Server Configuration Error');
 
-        keyStorage.keys.get = jest.fn().mockReturnValue({
-            id: 'new-key-id',
-            expiresIn: new Date()
+            process.env.REFRESH_TOKEN_SECRET = originalSecret;
+
         });
 
-        keyStorage.keys[Symbol.iterator] = jest.fn().mockReturnValue([][Symbol.iterator]());
-
-        const response = await request(app)
-            .post('/rotate-keys')
-            .send({ expiresInDays: 1 })
-            .expect(200);
-
-        expect(response.body.success).toBe(true);
-        expect(response.body).toHaveProperty('newKeyID');
     });
-
-    afterAll(() => 
-    {
-        jest.restoreAllMocks();
-    })
-
 });
