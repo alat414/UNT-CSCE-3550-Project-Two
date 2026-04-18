@@ -277,6 +277,20 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
             expect(response.body).toHaveProperty('error', 'Internal Server Error');
         });
+    });
 
+    describe('GET /debug-key-status', () => 
+    {
+        test('Should return detailed key status', async () =>
+        {
+            const response = await request(app)
+                .get('/debug-key-status')
+                .expect(200);
+
+            expect(response.body).toHaveProperty('currentTime');
+            expect(response.body).toHaveProperty('totalKeys');
+            expect(response.body).toHaveProperty('keys');
+            expect(response.body).toHaveProperty('activeKeyCount');
+        });
     });
 });
