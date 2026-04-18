@@ -135,6 +135,40 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     });
 
+     describe('GET /.well-known/jwks.json', () => 
+    {
+        test('Should return active RSA keys in JWKS format', async () =>
+        {
+            const response = await request(app)
+                .get('/.well-known/jwks.json')
+                .expect(200);
+
+            expect(response.body).toHaveProperty('keys');
+            expect(Array.isArray(response.body.keys)).toBe(true);
+            expect(response.body.keys.length).toBeGreaterThan(0);
+
+            const key = response.body.keys[0];
+            expect(response.body).toHaveProperty('kid', 'test-rsa-key-id');
+            expect(response.body).toHaveProperty('kty', 'RSA',);
+            expect(response.body).toHaveProperty('alg', 'RS256');
+            expect(response.body).toHaveProperty('use', 'sig');
+            expect(response.body).toHaveProperty('n');
+            expect(response.body).toHaveProperty('e');
+            expect(response.body).toHaveProperty('exp');
+        });
+
+        test('should handle errors when getting active keys', async () =>
+        {
+            keyStorage.getActiveKeys.mockRejectedValueOnce(new Error ('Database error'));
+
+            const response = await request(app)
+                .get('/.well-known/jwks.json')
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error');
+        });
+
+    });
     describe('POST /login', () => 
     {
         test('Should successfully login with valid username', async () =>
