@@ -1,11 +1,10 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
 *  Assignment: Project One JWKS server
-*  Purpose: Key Storage testing functions
-*           using group tests and blocks to 
-*           ensure proper POST, GET, token,
-*           error, and key(ID) returns 
-*           keyStorage.tests.js
+*  Purpose: Testing middleware functions
+*           using functions, calls, and returns
+*           to ensure functionality.
+*           app.tests.js
 ************************************************* */
 
 const request = require('supertest'); 
