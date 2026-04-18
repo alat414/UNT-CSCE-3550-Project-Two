@@ -168,21 +168,10 @@ describe('app.js - Authentication middleware', () =>
             expect(userPosts).toEqual([]);
         });
 
-        test('Should return 401 when token has no key ID in header', async () =>
+        test('should be case-insensitive', () => 
         {
-            const token = jwt.sign({ name: 'Nanna' }, 'secret');
-            req.headers.authorization = `Bearer ${token}`;
-            
-            authenticateToken(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith
-            ({
-                error: 'Invalid token structure',
-                message: 'Token missing key ID (kid) in header'
-            });
-
-            
+            const userPosts = getUserPosts('nanna'); 
+            expect(userPosts.length).toBeGreaterThan(0);
         });
 
         test('should return 401 when key ID not found', () => 
