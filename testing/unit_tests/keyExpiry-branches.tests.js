@@ -44,18 +44,43 @@ jest.mock('../../database',()  =>
     }   
 }));
 
-describe('keyExpiry.js - Branch Coverage Tests', () =>
+describe('keyExpiry.js - Comprehensive Tests', () =>
 {
+    let consoleErrorSpy;
+    let consoleLogSpy;
+
     beforeEach(() => 
     {
         jest.clearAllMocks();
 
-        jest.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        consoleLogSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        keyStorage.getCurrentKey.mockReturnValue('test-secret');
-        keyStorage.getCurrentKeyID.mockReturnValue('test-key-id');
-        keyStorage.generateNewKey.mockReturnValue('new-key-id');
-        keyStorage.removeExpiredKeys.mockReturnValue(0);
+        keyStorage.getCurrentPrivateKey.mockResolvedValue('-----BEGIN RSA PRIVATE KEY-----\nmock-private-key\n-----END RSA PRIVATE KEY-----');
+        keyStorage.getCurrentKeyID.mockReturnValue('test-rsa-key-id');
+        keyStorage.getCurrentKey.mockResolvedValue('mock-private-key');
+        keyStorage.generateNewKey.mockResolvedValue('new-rsa-key-id');
+        keyStorage.removeExpiredKeys.mockResolvedValue(0);
+        keyStorage.getActiveKeys.mockResolvedValue([
+            {
+                kid:'test-rsa-key-id',
+                kty: 'RSA',
+                alg: 'RS256',
+                use: 'sig',
+                n: 'mock-modulus',
+                e: 'AQAB',
+                exp: Math.floor(Date.now() / 1000) + 86400
+            }
+        ]);
+
+        keyStorage.getAllKeys.mockResolvedValue([]);
+        keyStorage.getKeyData.mockResolvedValue({
+            kid: 'test-rsa-key-id',
+            privateKey: 'mock-private-key',
+            publicKey: 'mock-public-key',
+            isActive: 1,
+            expiresIn: new Date(Date.now() + 8640000).toISOString()
+        });
     });
 
     test('POST /token should handle invalid refresh token', async () =>
