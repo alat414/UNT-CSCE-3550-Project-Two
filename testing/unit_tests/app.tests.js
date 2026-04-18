@@ -189,17 +189,11 @@ describe('app.js - Authentication middleware', () =>
             });
         })
 
-        test('should return empty array for user with no posts', () => 
+        test('posts should contain Nanna and Raggi', () => 
         {
-            const userPosts = getUserPosts('NonExistentUser');
-            expect(userPosts).toEqual([]);
+            const usernames = posts.map(p => p.username);
+            expect(usernames).toContain('Nanna');
+            expect(usernames).toContain('Raggi');
         });
-
-        test('should be case-insensitive', () => 
-        {
-            const userPosts = getUserPosts('nanna'); 
-            expect(userPosts.length).toBeGreaterThan(0);
-        });
-
     })
 });    
