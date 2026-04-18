@@ -156,56 +156,58 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('message', 'Invalid Username');
         });
 
-    });
-
-    test('Should return 500 when no active key available', async () =>
-    {
-        keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
-        keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
-
-        const response = await request(app)
-            .post('/login')
-            .send({ username: 'Nanna'})
-            .expect(500);
-
-        expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
-    });
-
-    
-
-    test('should return 500 when key is expired', async () =>
-    {
-        keyStorage.getKeyData.mockResolvedValueOnce(  
+        test('Should return 500 when no active key available', async () =>
         {
-            isActive: 0,
-            expiresIn: new Date(Date.now() - 86400000).toISOString()
+            keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
+            keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
+
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna'})
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
         });
 
-        const response = await request(app)
-            .post('/login')
-            .send({ username: 'Nanna' })
-            .expect(500);
+    
 
-        expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
+        test('should return 500 when key is expired', async () =>
+        {
+            keyStorage.getKeyData.mockResolvedValueOnce(  
+            {
+                isActive: 0,
+                expiresIn: new Date(Date.now() - 86400000).toISOString()
+            });
+
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
+        });
+
+        
+
+        test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
+        {
+            const originalSecret = process.env.REFRESH_TOKEN_SECRET;
+            delete process.env.REFRESH_TOKEN_SECRET;
+
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Server Configuration Error');
+
+            process.env.REFRESH_TOKEN_SECRET = originalSecret;
+
+        });
+
     });
 
     
-
-    test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
-    {
-        const originalSecret = process.env.REFRESH_TOKEN_SECRET;
-        delete process.env.REFRESH_TOKEN_SECRET;
-
-        const response = await request(app)
-            .post('/login')
-            .send({ username: 'Nanna' })
-            .expect(500);
-
-        expect(response.body).toHaveProperty('error', 'Server Configuration Error');
-
-        process.env.REFRESH_TOKEN_SECRET = originalSecret;
-
-    });
 
     test('GET /key-status should handle keys with different states', async () =>
     {
