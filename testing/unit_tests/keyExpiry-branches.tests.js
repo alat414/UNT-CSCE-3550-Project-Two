@@ -173,19 +173,20 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     
 
-    test('POST /rotate-keys should handle errors', async () =>
+    test('should return 500 when key is expired', async () =>
     {
-        keyStorage.generateNewKey.mockImplementationOnce( () => 
+        keyStorage.getKeyData.mockResolvedValueOnce(  
         {
-            throw new Error('Test error');
+            isActive: 0,
+            expiresIn: new Date(Date.now() - 86400000).toISOString()
         });
 
         const response = await request(app)
-            .post('/rotate-keys')
-            .send({ expiresInDays: 1 })
+            .post('/login')
+            .send({ username: 'Nanna' })
             .expect(500);
 
-        expect(response.body.error).toBe('Failed to rotate keys');
+        expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
     });
 
     
