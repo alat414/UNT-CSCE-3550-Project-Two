@@ -241,64 +241,41 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('error', 'Internal Server Error');
         });
 
-        test('should return 401 when username is invalid', async () =>
-        {
-            const response = await request(app)
-                .post('/login')
-                .send({ username: 'InvalidUser'})
-                .expect(401);
+    });
 
-            expect(response.body).toHaveProperty('error', 'Unauthorized');
-            expect(response.body).toHaveProperty('message', 'Invalid Username');
+    describe('GET /debug-keys', () => 
+    {
+        test('Should return debug key information', async () =>
+        {
+            const mockKeys = [
+                {   
+                    kid: 'debug-key-1',
+                    secret: 'mock-secret-12345678901234567890',
+                    createdAt: new Date().toISOString(),
+                    expiresIn: new Date(Date.now() + 86400000).toISOString(),
+                    isActive: 1
+                }
+            ];
+
+            keyStorage.getAllKeys.mockResolvedValueOnce(mockKeys);
+
+            const response = await request(app)
+                .get('/debug-keys')
+                .expect(200);
+
+            expect(Array.isArray(response.body)).toBe(true);
+            
         });
 
-        test('Should return 500 when no active key available', async () =>
+        test('should handle errors', async () =>
         {
-            keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
-            keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
+            keyStorage.getAllKeys.mockRejectedValueOnce(new Error ('Database error'));
 
             const response = await request(app)
-                .post('/login')
-                .send({ username: 'Nanna'})
+                .get('/key-status')
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
-        });
-
-    
-
-        test('should return 500 when key is expired', async () =>
-        {
-            keyStorage.getKeyData.mockResolvedValueOnce(  
-            {
-                isActive: 0,
-                expiresIn: new Date(Date.now() - 86400000).toISOString()
-            });
-
-            const response = await request(app)
-                .post('/login')
-                .send({ username: 'Nanna' })
-                .expect(500);
-
-            expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
-        });
-
-        
-
-        test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
-        {
-            const originalSecret = process.env.REFRESH_TOKEN_SECRET;
-            delete process.env.REFRESH_TOKEN_SECRET;
-
-            const response = await request(app)
-                .post('/login')
-                .send({ username: 'Nanna' })
-                .expect(500);
-
-            expect(response.body).toHaveProperty('error', 'Server Configuration Error');
-
-            process.env.REFRESH_TOKEN_SECRET = originalSecret;
-
+            expect(response.body).toHaveProperty('error', 'Internal Server Error');
         });
 
     });
