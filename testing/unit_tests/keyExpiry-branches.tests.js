@@ -272,7 +272,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             keyStorage.getAllKeys.mockRejectedValueOnce(new Error ('Database error'));
 
             const response = await request(app)
-                .get('/key-status')
+                .get('/debug-keys')
                 .expect(500);
 
             expect(response.body).toHaveProperty('error', 'Internal Server Error');
