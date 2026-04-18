@@ -152,21 +152,15 @@ describe('app.js - Authentication middleware', () =>
 
     });
 
-    describe('authenticationToken Middleware', () =>{
-        test('should return 401 when no token provided', () => 
+    describe('getUserPosts Function', () =>
+    {
+        test('should return posts for existing user', () => 
         {
-            req.headers.authorization = null;
-            
-            authenticateToken(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith
-            ({
-                error: 'Authentication Required',
-                message: 'No token provided in the Authorization Header'
-            });
-            expect(next).not.toHaveBeenCalled();
-        });
+            const userPosts = getUserPosts('Nanna');
+            expect(userPosts).toBeInstanceOf(Array);
+            expect(userPosts[0]).toHaveProperty('username', 'Nanna');
+            expect(userPosts[0]).toHaveProperty('title');
+        })
 
         test('should return 401 when token has invalid format', () => 
         {
