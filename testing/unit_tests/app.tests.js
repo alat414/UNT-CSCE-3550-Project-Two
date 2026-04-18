@@ -20,7 +20,7 @@ jest.mock('../../keyStorage', () =>
 }));
 
 
-const keyStorage = require('../../keyStorage'); 
+const { authenticateToken, getUserPosts, posts } = require('../../app');
 
 describe('app.js - Authentication middleware', () =>
 {
