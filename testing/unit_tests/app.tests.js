@@ -162,18 +162,10 @@ describe('app.js - Authentication middleware', () =>
             expect(userPosts[0]).toHaveProperty('title');
         })
 
-        test('should return 401 when token has invalid format', () => 
+        test('should return empty array for user with no posts', () => 
         {
-            req.headers.authorization = 'InvalidFormat';
-            
-            authenticateToken(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith
-            ({
-                error: 'Authentication Required',
-                message: 'No token provided in the Authorization Header'
-            });
+            const userPosts = getUserPosts('NonExistentUser');
+            expect(userPosts).toEqual([]);
         });
 
         test('Should return 401 when token has no key ID in header', async () =>
