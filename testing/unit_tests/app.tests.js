@@ -7,14 +7,18 @@
 *           app.tests.js
 ************************************************* */
 
-const request = require('supertest'); 
-const jwt = require('jsonwebtoken'); 
-const { app, authenticateToken, posts } = require('../../app'); 
+const jwt = require('jsonwebtoken');
+const keyStorage = require('../../keyStorage');
 
-jest.mock('../../keyStorage',()  => 
-    ({
-        getKey: jest.fn(),
-    }));
+// Mock keyStorage
+jest.mock('../../keyStorage', () => 
+({
+    getKey: jest.fn(),
+    getPublicKey: jest.fn(),
+    getCurrentKeyID: jest.fn(),
+    activeKeyID: null
+}));
+
 
 const keyStorage = require('../../keyStorage'); 
 
