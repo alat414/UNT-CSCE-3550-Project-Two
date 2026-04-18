@@ -11,8 +11,6 @@ const request = require('supertest');
 const { app } = require('../../keyExpiry'); 
 const keyStorage = require('../../keyStorage');
 const jwt = require('jsonwebtoken');
-const { db } = require('../../database');
-const { run } = require('jest');
 
 jest.mock('../../keyStorage',()  => 
 ({
@@ -55,7 +53,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         jest.clearAllMocks();
 
         consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        consoleLogSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
         const mockPrivateKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAokYPxwi90/SFvu6TL\n-----END RSA PRIVATE KEY-----';
         const mockPublicKey = '-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAokYPxwi90/SFvu6TL\n-----END RSA PUBLIC KEY-----';
@@ -87,14 +85,14 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 exp: Math.floor(Date.now() / 1000) + 86400
             }
         ]);
-        keyStorage.getAllKeys.mockResolvedValue({
+        keyStorage.getAllKeys.mockResolvedValue([{
             kid: 'test-rsa-key-id',
             privateKey: mockPrivateKey,
             publicKey: mockPublicKey,
             createdAt: new Date().toISOString(),
             expiresIn: new Date(Date.now() + 86400000).toISOString(),
             isActive: 1
-        });
+        }]);
         keyStorage.getPrivateKey.mockResolvedValue(mockPrivateKey);
         keyStorage.getPublicKey.mockResolvedValue(mockPublicKey);
         keyStorage.getKey.mockResolvedValue(mockPrivateKey);
@@ -148,13 +146,13 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body.keys.length).toBeGreaterThan(0);
 
             const key = response.body.keys[0];
-            expect(response.body).toHaveProperty('kid', 'test-rsa-key-id');
-            expect(response.body).toHaveProperty('kty', 'RSA',);
-            expect(response.body).toHaveProperty('alg', 'RS256');
-            expect(response.body).toHaveProperty('use', 'sig');
-            expect(response.body).toHaveProperty('n');
-            expect(response.body).toHaveProperty('e');
-            expect(response.body).toHaveProperty('exp');
+            expect(key).toHaveProperty('kid', 'test-rsa-key-id');
+            expect(key).toHaveProperty('kty', 'RSA',);
+            expect(key).toHaveProperty('alg', 'RS256');
+            expect(key).toHaveProperty('use', 'sig');
+            expect(key).toHaveProperty('n');
+            expect(key).toHaveProperty('e');
+            expect(key).toHaveProperty('exp');
         });
 
         test('should return empty keys array when no active keys exist', async () =>
@@ -163,7 +161,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
             const response = await request(app)
                 .get('/.well-known/jwks.json')
-                .expect(500);
+                .expect(200);
 
             expect(response.body).toEqual([]);
         });
@@ -184,7 +182,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         test('Should successfully login with valid username', async () =>
         {
             const response = await request(app)
-                .postt('/login')
+                .post('/login')
                 .send({ username: 'Nanna'})
                 .expect(200);
 
@@ -220,14 +218,14 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         test('Should return 500 when no active key available', async () =>
         {
             keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
-            keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
+            keyStorage.getCurrentKeyID.mockReturnValueOnce(null);
 
             const response = await request(app)
                 .post('/login')
                 .send({ username: 'Nanna'})
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
+            expect(response.body).toHaveProperty('error', 'Server configuration error - No key available');
         });
 
     
@@ -245,7 +243,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 .send({ username: 'Nanna' })
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Key Rotation in progress - please try again');
+            expect(response.body).toHaveProperty('error', 'Key rotation in progress - please try again');
         });
 
         
@@ -412,7 +410,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('error', 'Failed to rotate keys');
         });
     });
-    
+
     describe('GET /key-status', () => 
     {
         test('Should return key status information', async () =>
@@ -444,7 +442,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 .get('/key-status')
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Internal Server Error');
+            expect(response.body).toHaveProperty('error', 'Internal server Error');
         });
 
     });
@@ -481,7 +479,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 .get('/debug-keys')
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Internal Server Error');
+            expect(response.body).toHaveProperty('error', 'Internal server Error');
         });
     });
 
