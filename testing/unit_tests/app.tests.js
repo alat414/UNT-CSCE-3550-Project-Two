@@ -62,14 +62,18 @@ describe('app.js - Authentication middleware', () =>
             expect(next).not.toHaveBeenCalled();
         });
 
-        test('App.js file must successfully export without starting the server', async () =>
+        test('should return 401 when token has invalid format', () => 
         {
-            expect(app).toBeDefined();
-            expect(authenticateToken).toBeDefined();
-            expect(typeof authenticateToken).toBe('function');
-            expect(posts).toBeDefined();
-            expect(Array.isArray(posts)).toBe(true);
-            expect(posts.length).toBe(2);
+            req.headers.authorization = 'InvalidFormat';
+            
+            authenticateToken(req, res, next);
+            
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith
+            ({
+                error: 'Authentication Required',
+                message: 'No token provided in the Authorization Header'
+            });
         });
 
         test('Should return 401 when token has no key ID', async () =>
