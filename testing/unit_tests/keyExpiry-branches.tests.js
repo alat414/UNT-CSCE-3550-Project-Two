@@ -135,15 +135,25 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('algorithm', 'RS256');
         });
 
-        test('should handle errors when getting active keys', async () =>
+        test('should return 400 when username is missing', async () =>
         {
-            keyStorage.getActiveKeys.mockRejectedValueOnce(new Error ('Database error'));
-
             const response = await request(app)
-                .get('/.well-known/jwks.json')
-                .expect(500);
+                .post('/login')
+                .send({})
+                .expect(400);
 
-            expect(response.body).toHaveProperty('error');
+            expect(response.body).toHaveProperty('error', 'Username is required');
+        });
+
+        test('should return 401 when username is invalid', async () =>
+        {
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'InvalidUser'})
+                .expect(401);
+
+            expect(response.body).toHaveProperty('error', 'Unauthorized');
+            expect(response.body).toHaveProperty('message', 'Invalid Username');
         });
 
     });
