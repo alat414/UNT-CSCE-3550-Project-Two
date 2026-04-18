@@ -372,6 +372,47 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         });
     });
 
+    describe('POST /rotate-keys', () => 
+    {
+        test('should successfully rotate keys with default 1 day', async () => 
+        {
+            const response = await request(app)
+                .post('/rotate-keys')
+                .send({})
+                .expect(200);
+
+            expect(response.body).toHaveProperty('success', true);
+            expect(response.body).toHaveProperty('message', 'Keys rotated successfully');
+            expect(response.body).toHaveProperty('newKeyID', 'new-rsa-key-id');
+            expect(response.body).toHaveProperty('activeKeyID');
+            expect(response.body).toHaveProperty('cleanedUpKeys');
+            expect(keyStorage.generateNewKey).toHaveBeenCalledWith(1);
+        });
+
+        test('should successfully rotate keys with custom days', async () => 
+        {
+            const response = await request(app)
+                .post('/rotate-keys')
+                .send({ expiresInDays: 7 })
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(keyStorage.generateNewKey).toHaveBeenCalledWith(7);
+        });
+
+        test('should handle key generation errors', async () => 
+        {
+            keyStorage.generateNewKey.mockRejectedValueOnce(new Error('Generation failed'));
+
+            const response = await request(app)
+                .post('/rotate-keys')
+                .send({ expiresInDays: 1 })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Failed to rotate keys');
+        });
+    });
+    
     describe('GET /key-status', () => 
     {
         test('Should return key status information', async () =>
