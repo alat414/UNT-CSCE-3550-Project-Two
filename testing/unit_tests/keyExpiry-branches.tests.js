@@ -347,7 +347,31 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('error', 'Active key expired');
         });
     });
-    
+
+    describe('GET /posts', () => 
+    {
+        test('should return 401 when no token provided', async () => 
+        {
+            const response = await request(app)
+                .get('/posts')
+                .expect(401);
+
+            expect(response.body).toHaveProperty('error', 'Authentication Required');
+        });
+
+        test('should return 401 when token has no kid in header', async () => 
+        {
+            const tokenWithoutKid = jwt.sign({ name: 'Nanna' }, 'secret');
+            
+            const response = await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${tokenWithoutKid}`)
+                .expect(401);
+
+            expect(response.body).toHaveProperty('error', 'Invalid token structure');
+        });
+    });
+
     describe('GET /key-status', () => 
     {
         test('Should return key status information', async () =>
