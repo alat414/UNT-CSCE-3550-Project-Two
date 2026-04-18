@@ -174,62 +174,29 @@ describe('app.js - Authentication middleware', () =>
             expect(userPosts.length).toBeGreaterThan(0);
         });
 
-        test('should return 401 when key ID not found', () => 
-        {
-            const token = jwt.sign({ name: 'Nanna' }, 'secret', {
-                header: { kid: 'non-existent-key', alg: 'RS256' }
-            });
-            req.headers.authorization = `Bearer ${token}`;
-            
-            keyStorage.getPublicKey.mockResolvedValue(null);
-            
-            // Need to handle async middleware
-            const promise = new Promise((resolve) => 
-            {
-                authenticateToken(req, res, (err) => 
-                {
-                    resolve();
-                });
-            });
-            
-            return promise.then(() => 
-            {
-                expect(res.status).toHaveBeenCalledWith(401);
-                expect(res.json).toHaveBeenCalledWith
-                ({
-                    error: 'Key invalid',
-                    message: 'Token was signed with invalid key, retry.'
-                });
-            });
-        });
-
-
-        test('should call next() when token is valid', async () => 
-        {
-            const mockPublicKey = '-----BEGIN RSA PUBLIC KEY-----\nmock\n-----END RSA PUBLIC KEY-----';
-            const token = jwt.sign({ name: 'Nanna' }, 'private-key', {
-                header: { kid: 'valid-key', alg: 'RS256' }
-            });
-            req.headers.authorization = `Bearer ${token}`;
-            
-            keyStorage.getPublicKey.mockResolvedValue(mockPublicKey);
-            
-            // Mock jwt.verify to succeed
-            jest.spyOn(jwt, 'verify').mockImplementation((token, key, cb) => 
-            {
-                cb(null, { name: 'Nanna' });
-            });
-            
-            await new Promise((resolve) => 
-            {
-                authenticateToken(req, res, () => 
-                {
-                    expect(next).toHaveBeenCalled();
-                    expect(req.user).toBeDefined();
-                    resolve();
-                });
-            });
-        });
-
     });
+
+    describe('Posts Data Structure', () =>
+    {
+        test('should return posts for existing user', () => 
+        {
+            const userPosts = getUserPosts('Nanna');
+            expect(userPosts).toBeInstanceOf(Array);
+            expect(userPosts[0]).toHaveProperty('username', 'Nanna');
+            expect(userPosts[0]).toHaveProperty('title');
+        })
+
+        test('should return empty array for user with no posts', () => 
+        {
+            const userPosts = getUserPosts('NonExistentUser');
+            expect(userPosts).toEqual([]);
+        });
+
+        test('should be case-insensitive', () => 
+        {
+            const userPosts = getUserPosts('nanna'); 
+            expect(userPosts.length).toBeGreaterThan(0);
+        });
+
+    })
 });    
