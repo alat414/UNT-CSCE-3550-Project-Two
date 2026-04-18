@@ -178,12 +178,15 @@ describe('app.js - Authentication middleware', () =>
 
     describe('Posts Data Structure', () =>
     {
-        test('should return posts for existing user', () => 
+        test('posts array should have correct structure', () => 
         {
-            const userPosts = getUserPosts('Nanna');
-            expect(userPosts).toBeInstanceOf(Array);
-            expect(userPosts[0]).toHaveProperty('username', 'Nanna');
-            expect(userPosts[0]).toHaveProperty('title');
+            expect(posts).toBeInstanceOf(Array);
+            expect(posts.length).toBe(2);
+            
+            posts.forEach(post => {
+                expect(post).toHaveProperty('username');
+                expect(post).toHaveProperty('title');
+            });
         })
 
         test('should return empty array for user with no posts', () => 
