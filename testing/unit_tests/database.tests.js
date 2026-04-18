@@ -12,3 +12,17 @@
 const sqlite3 = require('sqlite3');
 const path = require('path');
 const fs = require('fs');
+
+jest.mock('sqlite3', () => 
+{
+    const mockRun = jest.fn();
+    const mockSerialize = jest.fn((callback) => callback());
+    const mockDatabase = jest.fn().mockImplementation(() => 
+    ({
+        serialize: mockSerialize,
+        run: mockRun,
+        close: jest.fn(),
+        exec: jest.fn((query, callback) => callback(null))
+    }));
+    return { verbose: () => mockDatabase };
+});
