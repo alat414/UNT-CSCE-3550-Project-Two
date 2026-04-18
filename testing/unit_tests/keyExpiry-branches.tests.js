@@ -158,17 +158,17 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     });
 
-    test('POST /token should handle invalid refresh token', async () =>
+    test('Should return 500 when no active key available', async () =>
     {
-        jest.spyOn(jwt, 'verify').mockImplementationOnce((token, secret, cb) =>
-        {
-            cb(new Error('Invalid token'), null);
-        })
+        keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
+        keyStorage.getCurrentKeyID.mockResolvedValueOnce(null);
 
-        await request(app)
-            .post('/token')
-            .send({ token: 'some-token'})
-            .expect(403);
+        const response = await request(app)
+            .post('/login')
+            .send({ username: 'Nanna'})
+            .expect(500);
+
+        expect(response.body).toHaveProperty('error', 'Server Configuration error- No key available');
     });
 
     
