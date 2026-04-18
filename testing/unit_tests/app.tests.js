@@ -93,26 +93,33 @@ describe('app.js - Authentication middleware', () =>
             
         });
 
-        test('Should return 401 when signing key is invalid', async () =>
+        test('should return 401 when key ID not found', () => 
         {
-            keyStorage.getKey.mockReturnValue(null);
-
-            const token = jwt.sign(
-                { name: 'Nanna' }, 
-                'some-secret',
-                { 
-                    expiresIn: '15s',
-                    header: { kid: 'non-existent-key', alg: 'HS256' } 
-                }
-            );
-
-            const response = await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(401);
-
-            expect(response.body.error).toBe('Key invalid');
-            expect(response.body.message).toBe('Token was signed with invalid key, retry.');
+            const token = jwt.sign({ name: 'Nanna' }, 'secret', {
+                header: { kid: 'non-existent-key', alg: 'RS256' }
+            });
+            req.headers.authorization = `Bearer ${token}`;
+            
+            keyStorage.getPublicKey.mockResolvedValue(null);
+            
+            // Need to handle async middleware
+            const promise = new Promise((resolve) => 
+            {
+                authenticateToken(req, res, (err) => 
+                {
+                    resolve();
+                });
+            });
+            
+            return promise.then(() => 
+            {
+                expect(res.status).toHaveBeenCalledWith(401);
+                expect(res.json).toHaveBeenCalledWith
+                ({
+                    error: 'Key invalid',
+                    message: 'Token was signed with invalid key, retry.'
+                });
+            });
         });
 
         test('Should return 403 for expired token', async () =>
