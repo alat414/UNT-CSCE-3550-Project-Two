@@ -157,6 +157,17 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('exp');
         });
 
+        test('should return empty keys array when no active keys exist', async () =>
+        {
+            keyStorage.getActiveKeys.mockResolvedValueOnce([]);
+
+            const response = await request(app)
+                .get('/.well-known/jwks.json')
+                .expect(500);
+
+            expect(response.body).toEqual([]);
+        });
+
         test('should handle errors when getting active keys', async () =>
         {
             keyStorage.getActiveKeys.mockRejectedValueOnce(new Error ('Database error'));
@@ -167,7 +178,6 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
             expect(response.body).toHaveProperty('error');
         });
-
     });
     describe('POST /login', () => 
     {
