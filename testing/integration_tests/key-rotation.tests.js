@@ -77,4 +77,4 @@ describe('Token Refresh testing', () =>
             .set({ 'Authorization': `Bear ${newToken}`})
             .expect(200);
     });
-});ECHO is on.
+});
