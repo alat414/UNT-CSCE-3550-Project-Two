@@ -268,6 +268,86 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     });
 
+    describe('POST /token', () => 
+    {
+        let originalSecret;
+
+        beforeAll(() => 
+        {
+            originalSecret = process.env.REFRESH_TOKEN_SECRET;
+            process.env.REFRESH_TOKEN_SECRET = 'test-refresh-secret';
+        });
+
+        afterAll(() => 
+        {
+            process.env.REFRESH_TOKEN_SECRET = originalSecret;
+        });
+
+        test('should successfully refresh token with valid refresh token', async () => 
+        {
+            const refreshToken = jwt.sign({ name: 'Nanna' }, process.env.REFRESH_TOKEN_SECRET);
+            
+            const response = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(200);
+
+            expect(response.body).toHaveProperty('accessToken');
+        });
+
+        test('should return 401 when no refresh token provided', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({})
+                .expect(401);
+
+            expect(response.body).toHaveProperty('error', 'Refresh token required');
+        });
+
+        test('should return 403 when refresh token is invalid', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: 'invalid.token.here' })
+                .expect(403);
+
+            expect(response.body).toHaveProperty('error', 'Invalid refresh token');
+        });
+
+        test('should return 500 when no active key available for refresh', async () => 
+        {
+            const refreshToken = jwt.sign({ name: 'Nanna' }, process.env.REFRESH_TOKEN_SECRET);
+            
+            keyStorage.getCurrentPrivateKey.mockResolvedValueOnce(null);
+            keyStorage.getCurrentKeyID.mockReturnValueOnce(null);
+
+            const response = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'No active key available');
+        });
+
+        test('should return 500 when active key is expired', async () => 
+        {
+            const refreshToken = jwt.sign({ name: 'Nanna' }, process.env.REFRESH_TOKEN_SECRET);
+            
+            keyStorage.getKeyData.mockResolvedValueOnce({
+                isActive: 0,
+                expiresIn: new Date(Date.now() - 86400000).toISOString()
+            });
+
+            const response = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Active key expired');
+        });
+    });
+    
     describe('GET /key-status', () => 
     {
         test('Should return key status information', async () =>
