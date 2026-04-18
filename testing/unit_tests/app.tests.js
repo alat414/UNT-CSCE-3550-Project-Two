@@ -27,6 +27,21 @@ describe('app.js - Authentication middleware', () =>
     beforeEach(() => 
     {
         jest.clearAllMocks();
+
+        req = 
+        {
+            headers: {},
+            user: null
+        };
+        res = 
+        {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn().mockReturnThis(),
+            sendStatus: jest.fn().mockReturnThis()
+        };
+        
+        next = jest.fn();
+
     });
 
     test('Authentication test for handling verification erros', async () =>
