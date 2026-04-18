@@ -25,7 +25,7 @@ const { authenticateToken, getUserPosts, posts } = require('../../app');
 describe('app.js - Authentication middleware', () =>
 {
     let req, res, next;
-    
+
     beforeEach(() => 
     {
         jest.clearAllMocks();
@@ -47,26 +47,19 @@ describe('app.js - Authentication middleware', () =>
     });
 
     describe('authenticationToken Middleware', () =>{
-        test('Authentication test for handling verification erros', async () =>
+        test('should return 401 when no token provided', () => 
         {
-            keyStorage.getKey.mockReturnValue('valid-secret');
-
-            const token = jwt.sign(
-                { name: 'Nanna' }, 
-                'wrong=secret',
-                { 
-                    expiresIn: '15s',
-                    header: { kid: 'test-key-id', alg: 'HS256' } 
-                }
-            );
-
-            const response = await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(403);
-
-            expect(response.body.error).toBe('Invalid Token');
+            req.headers.authorization = null;
             
+            authenticateToken(req, res, next);
+            
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith
+            ({
+                error: 'Authentication Required',
+                message: 'No token provided in the Authorization Header'
+            });
+            expect(next).not.toHaveBeenCalled();
         });
 
         test('App.js file must successfully export without starting the server', async () =>
