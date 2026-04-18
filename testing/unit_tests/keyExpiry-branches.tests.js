@@ -79,10 +79,16 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             privateKey: 'mock-private-key',
             publicKey: 'mock-public-key',
             isActive: 1,
-            expiresIn: new Date(Date.now() + 8640000).toISOString()
+            expiresIn: new Date(Date.now() + 86400000).toISOString()
         });
     });
 
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+        consoleLogSpy.mockRestore();
+    });
+
+    
     test('POST /token should handle invalid refresh token', async () =>
     {
         jest.spyOn(jwt, 'verify').mockImplementationOnce((token, secret, cb) =>
