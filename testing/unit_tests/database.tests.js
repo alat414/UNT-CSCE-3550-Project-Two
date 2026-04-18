@@ -90,4 +90,14 @@ describe('Database Initialization Tests', () => {
         consoleErrorSpy.mockRestore();
     });
 
+    test('database.js should close connection on SIGTERM', () => 
+    {
+        const { db } = require('../../database');
+        const closeSpy = jest.spyOn(db, 'close');
+        
+        process.emit('SIGTERM');
+        
+        expect(closeSpy).toHaveBeenCalled();
+        closeSpy.mockRestore();
+    });
 });
