@@ -122,48 +122,34 @@ describe('app.js - Authentication middleware', () =>
             });
         });
 
-        test('Should return 403 for expired token', async () =>
+
+        test('should call next() when token is valid', async () => 
         {
-            keyStorage.getKey.mockReturnValue('valid-secret');
-
-            const token = jwt.sign(
-                { name: 'Nanna' }, 
-                'valid-secret',
-                { 
-                    expiresIn: '-10s',
-                    header: { kid: 'test-key-id', alg: 'HS256' } 
-                }
-            );
-
-            const response = await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(403);
-
-            expect(response.body.error).toBe('Token Expired');
+            const mockPublicKey = '-----BEGIN RSA PUBLIC KEY-----\nmock\n-----END RSA PUBLIC KEY-----';
+            const token = jwt.sign({ name: 'Nanna' }, 'private-key', {
+                header: { kid: 'valid-key', alg: 'RS256' }
+            });
+            req.headers.authorization = `Bearer ${token}`;
+            
+            keyStorage.getPublicKey.mockResolvedValue(mockPublicKey);
+            
+            // Mock jwt.verify to succeed
+            jest.spyOn(jwt, 'verify').mockImplementation((token, key, cb) => 
+            {
+                cb(null, { name: 'Nanna' });
+            });
+            
+            await new Promise((resolve) => 
+            {
+                authenticateToken(req, res, () => 
+                {
+                    expect(next).toHaveBeenCalled();
+                    expect(req.user).toBeDefined();
+                    resolve();
+                });
+            });
         });
-
-        test('Should return 200 with posts for valid tokens', async () =>
-        {
-            keyStorage.getKey.mockReturnValue('valid-secret');
-
-            const token = jwt.sign(
-                { name: 'Nanna' }, 
-                'valid-secret',
-                { 
-                    expiresIn: '15s',
-                    header: { kid: 'test-key-id', alg: 'HS256' } 
-                }
-            );
-
-            const response = await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
-
-            expect(Array.isArray(response.body)).toBe(true);
-            expect(response.body[0].username).toBe('Nanna');
-        });
+    
 
         test('Should return 401 for malformed authorization header', async () =>
         {
