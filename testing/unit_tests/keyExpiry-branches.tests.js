@@ -230,14 +230,15 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             
         });
 
-        test('should return 400 when username is missing', async () =>
+        test('should handle errors', async () =>
         {
-            const response = await request(app)
-                .post('/login')
-                .send({})
-                .expect(400);
+            keyStorage.getAllKeys.mockRejectedValueOnce(new Error ('Database error'));
 
-            expect(response.body).toHaveProperty('error', 'Username is required');
+            const response = await request(app)
+                .get('/key-status')
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error', 'Internal Server Error');
         });
 
         test('should return 401 when username is invalid', async () =>
