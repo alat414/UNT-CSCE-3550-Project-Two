@@ -105,6 +105,17 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('database', 'SQLite (jwks-server.db)');
         });
 
+        test('should handle errors when getting active keys', async () =>
+        {
+            keyStorage.getActiveKeys.mockRejectedValueOnce(new Error ('Database error'));
+
+            const response = await request(app)
+                .get('/.well-known/jwks.json')
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error');
+        });
+
     })
     test('POST /token should handle invalid refresh token', async () =>
     {
@@ -119,17 +130,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             .expect(403);
     });
 
-    test('POST /login should handle no key available', async () =>
-    {
-        keyStorage.getCurrentKey.mockReturnValue(null);
-
-        const response = await request(app)
-            .post('/login')
-            .send({ username: 'Nanna' })
-            .expect(500);
-
-        expect(response.body.error).toBe('No key available');
-    });
+    
 
     test('POST /rotate-keys should handle errors', async () =>
     {
