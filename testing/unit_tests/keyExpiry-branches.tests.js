@@ -116,7 +116,38 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('error');
         });
 
-    })
+    });
+
+    describe('POST /login', () => 
+    {
+        test('Should successfully login with valid username', async () =>
+        {
+            const response = await request(app)
+                .postt('/login')
+                .send({ username: 'Nanna'})
+                .expect(200);
+
+            expect(response.body).toHaveProperty('accessToken');
+            expect(response.body).toHaveProperty('refreshToken');
+            expect(response.body).toHaveProperty('keyID');
+            expect(response.body).toHaveProperty('keyExpiresIn');
+            expect(response.body).toHaveProperty('tokenExpiresIn', '30 seconds');
+            expect(response.body).toHaveProperty('algorithm', 'RS256');
+        });
+
+        test('should handle errors when getting active keys', async () =>
+        {
+            keyStorage.getActiveKeys.mockRejectedValueOnce(new Error ('Database error'));
+
+            const response = await request(app)
+                .get('/.well-known/jwks.json')
+                .expect(500);
+
+            expect(response.body).toHaveProperty('error');
+        });
+
+    });
+
     test('POST /token should handle invalid refresh token', async () =>
     {
         jest.spyOn(jwt, 'verify').mockImplementationOnce((token, secret, cb) =>
