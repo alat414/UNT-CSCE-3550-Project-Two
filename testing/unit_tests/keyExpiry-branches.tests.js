@@ -191,18 +191,20 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
     
 
-    test('Function generateToken should handle missing key', async () =>
+    test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
     {
-        keyStorage.getCurrentKey.mockReturnValue(null);
+        const originalSecret = process.env.REFRESH_TOKEN_SECRET;
+        delete process.env.REFRESH_TOKEN_SECRET;
 
-        return request(app)
+        const response = await request(app)
             .post('/login')
             .send({ username: 'Nanna' })
-            .expect(500)
-            .then(response => 
-            {
-                expect(response.body.error).toBe('No key available');
-            });
+            .expect(500);
+
+        expect(response.body).toHaveProperty('error', 'Server Configuration Error');
+
+        process.env.REFRESH_TOKEN_SECRET = originalSecret;
+
     });
 
     test('GET /key-status should handle keys with different states', async () =>
