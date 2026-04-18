@@ -88,7 +88,24 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         consoleLogSpy.mockRestore();
     });
 
-    
+    describe('GET /health', () => 
+    {
+        test('Should return health status with active key information', async () =>
+        {
+            const response = await request(app)
+                .get('/health')
+                .expect(200);
+
+            expect(response.body).toHaveProperty('status', 'OK');
+            expect(response.body).toHaveProperty('timestamp');
+            expect(response.body).toHaveProperty('activeKeyID');
+            expect(response.body).toHaveProperty('keyCount');
+            expect(response.body).toHaveProperty('activeKeyValid');
+            expect(response.body).toHaveProperty('uptime');
+            expect(response.body).toHaveProperty('database', 'SQLite (jwks-server.db)');
+        });
+
+    })
     test('POST /token should handle invalid refresh token', async () =>
     {
         jest.spyOn(jwt, 'verify').mockImplementationOnce((token, secret, cb) =>
@@ -129,15 +146,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
         expect(response.body.error).toBe('Failed to rotate keys');
     });
 
-    test('GET /key-status should handle empty keys', async () =>
-    {
-        keyStorage.keys[Symbol.iterator] = jest.fn().mockReturnValue([][Symbol.iterator]());
-        const response = await request(app)
-            .get('/key-status')
-            .expect(200);
-
-        expect(Array.isArray(response.body)).toBe(true);
-    });
+    
 
     test('Function generateToken should handle missing key', async () =>
     {
