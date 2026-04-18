@@ -100,4 +100,15 @@ describe('Database Initialization Tests', () => {
         expect(closeSpy).toHaveBeenCalled();
         closeSpy.mockRestore();
     });
+
+    test('database.js should close connection on SIGINT', () => 
+    {
+        const { db } = require('../../database');
+        const closeSpy = jest.spyOn(db, 'close');
+        
+        process.emit('SIGINT');
+        
+        expect(closeSpy).toHaveBeenCalled();
+        closeSpy.mockRestore();
+    });
 });
