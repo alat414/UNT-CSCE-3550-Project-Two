@@ -32,25 +32,26 @@ describe('Database Initialization Tests', () => {
     let dbModule;
     let testDbPath;
 
-    beforeEach(() => {
+    beforeEach(() => 
+    {
         jest.clearAllMocks();
-        // Reset module cache to test fresh database initialization
         delete require.cache[require.resolve('../../database')];
     });
 
-    afterEach(() => {
-        if (testDbPath && fs.existsSync(testDbPath)) {
+    afterEach(() => 
+    {
+        if (testDbPath && fs.existsSync(testDbPath)) 
+        {
             fs.unlinkSync(testDbPath);
         }
     });
 
-    test('database.js should create keys table with correct schema', () => {
+    test('database.js should create keys table with correct schema', () => 
+    {
         const { db } = require('../../database');
         
-        // Verify table creation was called
         expect(db.run).toHaveBeenCalled();
         
-        // Check that CREATE TABLE statement contains correct columns
         const createTableCall = db.run.mock.calls.find(
             call => call[0] && call[0].includes('CREATE TABLE')
         );
@@ -62,6 +63,31 @@ describe('Database Initialization Tests', () => {
         expect(createTableCall[0]).toContain('createdAt TEXT NOT NULL');
         expect(createTableCall[0]).toContain('expiresIn TEXT NOT NULL');
         expect(createTableCall[0]).toContain('isActive INTEGER NOT NULL DEFAULT 1');
+    });
+
+    test('database.js should handle table creation errors gracefully', () => 
+    {
+        // Mock run to simulate error
+        const mockError = new Error('Table creation failed');
+        const mockRunWithError = jest.fn((query, callback) => callback(mockError));
+        
+        jest.mock('sqlite3', () => 
+        {
+            return { verbose: () => jest.fn().mockImplementation(() => 
+            ({
+                serialize: (cb) => cb(),
+                run: mockRunWithError,
+                close: jest.fn()
+            })) };
+        });
+        
+        // Reload module to trigger error path
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        
+        require('../../database');
+        
+        expect(consoleErrorSpy).toHaveBeenCalled();
+        consoleErrorSpy.mockRestore();
     });
 
 });
