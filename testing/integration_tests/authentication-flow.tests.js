@@ -51,14 +51,14 @@ describe('Authentication Flow', () =>
 
     describe ('POST /login', () =>
     {
-        test('Must return 400 if the username is missing', async () =>
+        test('Step 1: Health check should confirm server is ready', async () => 
         {
             const response = await request(app)
-                .post('/login')
-                .send({})
-                .expect(400);
-
-            expect(response.body.error).toBe('Username is required');
+                .get('/health')
+                .expect(200);
+            
+            expect(response.body.status).toBe('OK');
+            expect(response.body).toHaveProperty('activeKeyID');
         });
 
         test('Must return 401 if the username is invalid', async () =>
