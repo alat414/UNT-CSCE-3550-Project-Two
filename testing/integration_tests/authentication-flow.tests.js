@@ -14,12 +14,15 @@
 *  testing environment and 
 *  key testing functions.
 ************************************************* */
-const {request, app } = require('../setup/testsEnvironment');
-const { VALID_USERS, INVALID_USERS, EXPECTED_POSTS } = require('../fixture_tests/test-keys');
+const request = require('supertest');
+const { app } = require('../../keyExpiry');
+const { db } = require('../../database');
+const jwt = require('jsonwebtoken')
 
 
 describe('Authentication Flow', () => 
 {
+
     describe ('POST /login', () =>
     {
         test('Must return 400 if the username is missing', async () =>
