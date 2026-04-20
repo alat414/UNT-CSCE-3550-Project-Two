@@ -21,6 +21,44 @@ const { db } = require('../../database');
 
 describe('Error Handling Flow', () => 
 {
+    /* *************************************************
+    * This function clears all data using query prompt
+
+    * @param  : none
+    * @return : emoty
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    beforeAll(async () => 
+    {
+        await new Promise((resolve, reject) => 
+        {
+            db.run(`DELETE FROM keys`, (err) => 
+            {
+                if (err) 
+                {
+                    reject(err);
+                }
+                else
+                {
+                    resolve();
+                }
+            });
+        });
+    });
+
+    /* *************************************************
+    * This function closes database after last prompt. 
+
+    * @param  done: calling function 
+    * @return : none 
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    afterAll((done) => 
+    {
+        db.close(done);
+    });
    
     test('GET /posts return 401 for malformed tokens', async () =>
     {
