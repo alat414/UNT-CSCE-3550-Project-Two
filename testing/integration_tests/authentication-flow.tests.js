@@ -79,27 +79,17 @@ describe('Authentication Flow', () =>
             keyID = response.body.keyID;
         });
 
-        test('Must return 200 with proper tokens if the username is valid', async () =>
+        test('Step 3: Access protected endpoint with valid token', async () => 
         {
-            for (const username of VALID_USERS)
-            {
-                const response = await request(app)
-                    .post('/login')
-                    .send({ username})
-                    .expect(200);
-                
-                expect(response.body).toHaveProperty('accessToken');
-                expect(response.body).toHaveProperty('refreshToken');
-                expect(response.body).toHaveProperty('keyID');
-                expect(response.body).toHaveProperty('keyExpiresIn');
-
-                const tokenParts = response.body.accessToken.split('.');
-                expect(tokenParts.length).toBe(3);
-
-                global[`${username}AccessToken`] = response.body.accessToken;
-                global[`${username}RefreshToken`] = response.body.refreshToken;
-            }
+            const response = await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
+            
+            expect(Array.isArray(response.body)).toBe(true);
+            expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0]).toHaveProperty('username', 'Nanna');
+            expect(response.body[0]).toHaveProperty('title');
         });
     })
-
 })
