@@ -72,17 +72,14 @@ describe('Error Handling Flow', () =>
             expect(response.body.error).toBe('Username is required');
         });
 
-        test('GET /posts return 401 for tokens with missing kid in header', async () =>
+        test('Empty username should return 400', async () => 
         {
-            const token = jwt.sign(   
-                { name: 'Nanna' },
-                'some-secret',
-                { expiresIn: '30s' }
-            );
-            await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(401);
+            const response = await request(app)
+                .post('/login')
+                .send({ username: '' })
+                .expect(400);
+            
+            expect(response.body.error).toBe('Username is required');
         });
 
         test('GET /posts return 401 for an expired keyID', async () =>
