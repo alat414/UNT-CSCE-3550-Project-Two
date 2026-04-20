@@ -108,5 +108,20 @@ describe('Authentication Flow', () =>
             
             expect(response.body[0]).toHaveProperty('username', 'Raggi');
         });
+
+        test('Step 5: Invalid token should be rejected', async () => 
+        {
+            await request(app)
+                .get('/posts')
+                .set('Authorization', 'Bearer invalid.token.here')
+                .expect(403);
+        });
+
+        test('Step 6: Missing token should be rejected', async () => 
+        {
+            await request(app)
+                .get('/posts')
+                .expect(401);
+        });
     })
 })
