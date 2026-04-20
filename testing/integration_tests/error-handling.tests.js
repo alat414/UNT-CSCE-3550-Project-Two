@@ -5,19 +5,18 @@
 *           using group tests and blocks to 
 *           ensure proper POST, GET, token,
 *           error, and key (ID) returns 
-*           authentication-flow.tests.js
+*           error-handling.tests.js
 ************************************************* */
 
 
 /* *************************************************
-*  Importing a local module in both 
-*  testing environment and 
+*  Importing a local module in  
 *  key testing functions.
 ************************************************* */
 
-const {request, app } = require('../setup/testsEnvironment');
-
-const jwt = require('jsonwebtoken');
+const request = require('supertest');
+const { app } = require('../../keyExpiry');
+const { db } = require('../../database');
 
 
 describe('Error Handling Flow', () => 
