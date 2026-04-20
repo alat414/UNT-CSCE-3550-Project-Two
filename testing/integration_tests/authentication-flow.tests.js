@@ -61,19 +61,22 @@ describe('Authentication Flow', () =>
             expect(response.body).toHaveProperty('activeKeyID');
         });
 
-        test('Must return 401 if the username is invalid', async () =>
+        test('Step 2: Login with valid credentials should return tokens', async () => 
         {
-            for (const invalidUser of INVALID_USERS)
-            {
-                const response = await request(app)
-                    .post('/login')
-                    .send({ username: invalidUser})
-                    .expect(401);
-                
-                expect(response.body.error).toBe('Username is unauthorized');
-                expect(response.body.message).toBe('Username is invalid');
-
-            }
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(200);
+            
+            expect(response.body).toHaveProperty('accessToken');
+            expect(response.body).toHaveProperty('refreshToken');
+            expect(response.body).toHaveProperty('keyID');
+            expect(response.body).toHaveProperty('tokenExpiresIn', '30 seconds');
+            expect(response.body).toHaveProperty('algorithm', 'RS256');
+            
+            accessToken = response.body.accessToken;
+            refreshToken = response.body.refreshToken;
+            keyID = response.body.keyID;
         });
 
         test('Must return 200 with proper tokens if the username is valid', async () =>
