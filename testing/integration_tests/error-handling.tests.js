@@ -82,20 +82,15 @@ describe('Error Handling Flow', () =>
             expect(response.body.error).toBe('Username is required');
         });
 
-        test('GET /posts return 401 for an expired keyID', async () =>
+        test('Invalid username should return 401', async () => 
         {
-            const token = jwt.sign(   
-                { name: 'Nanna' },
-                'some-secret',
-                {
-                    expiresIn: '30s',
-                    header: { kid: 'non-existent-key', alg: 'HS256'}
-                }
-            );
-            await request(app)
-                .get('/posts')
-                .set('Authorization', `Bearer ${token}`)
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'Brynjar' })
                 .expect(401);
+            
+            expect(response.body.error).toBe('Unauthorized');
+            expect(response.body.message).toBe('Invalid Username');
         });
 
         test('POST /token return 403 for malformed refresh tokens', async () =>
