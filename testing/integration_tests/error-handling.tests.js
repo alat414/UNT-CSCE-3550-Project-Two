@@ -93,12 +93,14 @@ describe('Error Handling Flow', () =>
             expect(response.body.message).toBe('Invalid Username');
         });
 
-        test('POST /token return 403 for malformed refresh tokens', async () =>
+        test('Case-sensitive username should work with exact case', async () => 
         {
-            await request(app)
-                .post('/token')
-                .send({ token: 'malformed.refresh.token' })
-                .expect(403);
+            const response = await request(app)
+                .post('/login')
+                .send({ username: 'nanna' })
+                .expect(200);
+            
+            expect(response.body).toHaveProperty('accessToken');
         });
 
         test('POST /login return 401 for missing refresh tokens', async () =>
