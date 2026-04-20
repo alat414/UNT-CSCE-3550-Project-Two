@@ -91,5 +91,22 @@ describe('Authentication Flow', () =>
             expect(response.body[0]).toHaveProperty('username', 'Nanna');
             expect(response.body[0]).toHaveProperty('title');
         });
+
+        test('Step 4: Different user should see their own posts', async () => 
+        {
+            const loginResponse = await request(app)
+                .post('/login')
+                .send({ username: 'Raggi' })
+                .expect(200);
+            
+            const raggiToken = loginResponse.body.accessToken;
+            
+            const response = await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${raggiToken}`)
+                .expect(200);
+            
+            expect(response.body[0]).toHaveProperty('username', 'Raggi');
+        });
     })
 })
