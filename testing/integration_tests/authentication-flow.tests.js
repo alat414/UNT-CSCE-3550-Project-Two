@@ -22,6 +22,32 @@ const jwt = require('jsonwebtoken')
 
 describe('Authentication Flow', () => 
 {
+    let accessToken;
+    let refreshToken;
+    let keyID;
+
+    beforeAll(async () => 
+    {
+        await new Promise((resolve, reject) => 
+        {
+            db.run(`DELETE FROM keys`, (err) => 
+            {
+                if (err) 
+                {
+                    reject(err);
+                }
+                else 
+                {
+                    resolve();
+                }
+            });
+        });
+    });
+
+    afterAll((done) => 
+    {
+        db.close(done);
+    });
 
     describe ('POST /login', () =>
     {
