@@ -1,10 +1,10 @@
 /* *************************************************
 *  Name: Gustavo Alatriste
 *  Assignment: Project One JWKS server
-*  Purpose: Token expiry testing functions
+*  Purpose: Token refresh testing functions
 *           using group tests and blocks to 
-*           ensure proper POST, GET, token,
-*           error, and key (ID) returns 
+*           ensure all callbacks and responses
+*           are adequate and reflective of functions
 *           token-expiry.tests.js
 ************************************************* */
 
@@ -15,66 +15,160 @@
 *  key testing functions.
 ************************************************* */
 
-const {request, app } = require('../setup/testsEnvironment');
+const request = require('supertest');
+const { app } = require('../../keyExpiry');
 
-describe('Token Refresh testing', () => 
-{
+describe('Token Refresh - Integration Tests', () => {
     let refreshToken;
     let accessToken;
 
-    beforeAll(async () =>
+    beforeAll(async () => 
     {
-        const response = await request(app)
+        const loginResponse = await request(app)
             .post('/login')
-            .send({ username: 'Nanna'});
+            .send({ username: 'Nanna' })
+            .expect(200);
         
-        accessToken = response.body.accessToken;
-        refreshToken = response.body.refreshToken;
-
+        accessToken = loginResponse.body.accessToken;
+        refreshToken = loginResponse.body.refreshToken;
     });
 
-    test('POST /token with valid refresh token returns new access token', async () =>
+    describe('Successful Refresh Flow', () => 
     {
-        const response = await request(app)
-            .post('/token')
-            .send({ token: refreshToken})
-            .expect(200);
+        test('Refresh token should return new access token', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(200);
+            
+            expect(response.body).toHaveProperty('accessToken');
+            expect(response.body.accessToken).not.toBe(accessToken);
+        });
 
-        expect(response.body).toHaveProperty('accessToken');
-        expect(response.body.accessToken).not.toBe(accessToken);
+        test('New access token should work for protected endpoints', async () => 
+        {
+            const refreshResponse = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(200);
+            
+            const newAccessToken = refreshResponse.body.accessToken;
+            
+            const postsResponse = await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${newAccessToken}`)
+                .expect(200);
+            
+            expect(postsResponse.body).toBeInstanceOf(Array);
+        });
 
+        test('Multiple refreshes should work sequentially', async () => 
+        {
+            let currentToken = refreshToken;
+            
+            for (let i = 0; i < 3; i++) 
+            {
+                const response = await request(app)
+                    .post('/token')
+                    .send({ token: currentToken })
+                    .expect(200);
+                
+                expect(response.body).toHaveProperty('accessToken');
+                currentToken = response.body.accessToken;
+            }
+        });
     });
 
-    test('POST /token with invalid refresh token returns 403', async () =>
+    describe('Refresh Token Edge Cases', () => 
     {
-        await request(app)
-            .post('/token')
-            .send({ token: 'invalid.refresh.token'})
-            .expect(403);
+        test('Empty token should return 401', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: '' })
+                .expect(401);
+            
+            expect(response.body.error).toBe('Refresh token required');
+        });
+
+        test('Null token should return 401', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: null })
+                .expect(401);
+            
+            expect(response.body.error).toBe('Refresh token required');
+        });
+
+        test('Malformed refresh token should return 403', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: 'malformed-token' })
+                .expect(403);
+            
+            expect(response.body.error).toBe('Invalid refresh token');
+        });
+
+        test('Tampered refresh token should return 403', async () => 
+        {
+            const tamperedToken = refreshToken.slice(0, -5) + 'xxxxx';
+            
+            const response = await request(app)
+                .post('/token')
+                .send({ token: tamperedToken })
+                .expect(403);
+            
+            expect(response.body.error).toBe('Invalid refresh token');
+        });
     });
 
-    
-
-    test('POST /token without token returns 401', async () =>
+    describe('Refresh with Expired Access Token', () => 
     {
-        await request(app)
-            .post('/token')
-            .send({})
-            .expect(401);
+        test('Should be able to refresh after access token expires', async () => 
+        {
+            // Wait for access token to expire
+            await new Promise(resolve => setTimeout(resolve, 31000));
+            
+            // Access token should be expired
+            await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(403);
+            
+            // Refresh should still work
+            const refreshResponse = await request(app)
+                .post('/token')
+                .send({ token: refreshToken })
+                .expect(200);
+            
+            expect(refreshResponse.body).toHaveProperty('accessToken');
+        }, 35000);
     });
 
-    test('New accesstoken from refresh call must work for post requests', async () =>
+    describe('Concurrent Refresh Requests', () => 
     {
-        const refreshResponse = await request(app)
-            .post('/token')
-            .send({ token: refreshToken})
-            .expect(200);
-
-        const newToken  = refreshResponse.body.accessToken;
-
-        await request(app)
-            .get('/posts')
-            .set({ 'Authorization': `Bear ${newToken}`})
-            .expect(200);
+        test('Multiple simultaneous refresh requests should all succeed', async () => 
+        {
+            const refreshPromises = [];
+            
+            for (let i = 0; i < 5; i++) 
+            {
+                refreshPromises.push(
+                    request(app)
+                        .post('/token')
+                        .send({ token: refreshToken })
+                        .expect(200)
+                );
+            }
+            
+            const responses = await Promise.all(refreshPromises);
+            
+            responses.forEach(response => {
+                expect(response.body).toHaveProperty('accessToken');
+            });
+        });
     });
-});
+})
