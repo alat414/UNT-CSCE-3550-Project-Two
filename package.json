@@ -28,8 +28,10 @@
     "test:unit": "jest testing/unit_tests --coverage",
     "test:integration": "jest testing/integration_tests",
     "test:auth": "jest testing/integration_tests/authentication-flow.tests.js",
-    "test:keys": "jest testing/integration_tests/key-rotation.tests.js",
+    "test:errors": "jest testing/integration_tests/error-handling/tests.js",
+    "test:rotations": "jest testing/integration_tests/key-rotation.tests.js",
     "test:expiry": "jest testing/integration_tests/token-expiry.tests.js",
+    "test:refresh": "jest testing/integration_tests/token-refresh.tests.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --coverageReporters=text",
     "test:ci": "jest --ci --coverage --maxWorkers=2"
