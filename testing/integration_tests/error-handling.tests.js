@@ -19,49 +19,27 @@ const { app } = require('../../keyExpiry');
 const { db } = require('../../database');
 
 
-describe('Error Handling Flow', () => 
+describe('Error Handling - Integration Tests', () => 
 {
-    /* *************************************************
-    * This function clears all data using query prompt
-
-    * @param  : none
-    * @return : emoty
-    * @exception : none
-    * @note : na
-    * ************************************************* */
     beforeAll(async () => 
     {
         await new Promise((resolve, reject) => 
         {
             db.run(`DELETE FROM keys`, (err) => 
             {
-                if (err) 
-                {
-                    reject(err);
-                }
-                else
-                {
-                    resolve();
-                }
+                if (err) reject(err);
+                else resolve();
             });
         });
     });
 
-    /* *************************************************
-    * This function closes database after last prompt. 
-
-    * @param  done: calling function 
-    * @return : none 
-    * @exception : none
-    * @note : na
-    * ************************************************* */
     afterAll((done) => 
     {
         db.close(done);
     });
-    
-    describe('Login Endpoint Errors', () =>{
 
+    describe('Login Endpoint Errors', () => 
+    {
         test('Missing username should return 400', async () => 
         {
             const response = await request(app)
@@ -86,7 +64,7 @@ describe('Error Handling Flow', () =>
         {
             const response = await request(app)
                 .post('/login')
-                .send({ username: 'Brynjar' })
+                .send({ username: 'Hacker' })
                 .expect(401);
             
             expect(response.body.error).toBe('Unauthorized');
@@ -102,7 +80,120 @@ describe('Error Handling Flow', () =>
             
             expect(response.body).toHaveProperty('accessToken');
         });
+    });
 
-        
+    describe('Token Endpoint Errors', () => 
+    {
+        test('Missing token should return 401', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({})
+                .expect(401);
+            
+            expect(response.body.error).toBe('Refresh token required');
+        });
+
+        test('Invalid token format should return 403', async () => 
+        {
+            const response = await request(app)
+                .post('/token')
+                .send({ token: 'not.a.valid.jwt' })
+                .expect(403);
+            
+            expect(response.body.error).toBe('Invalid refresh token');
+        });
+
+        test('Malformed JSON should return 400', async () => 
+        {
+            await request(app)
+                .post('/token')
+                .set('Content-Type', 'application/json')
+                .send('{invalid json}')
+                .expect(400);
+        });
+    });
+
+    describe('Protected Endpoint Errors', () => {
+        test('No Authorization header should return 401', async () => 
+        {
+            const response = await request(app)
+                .get('/posts')
+                .expect(401);
+            
+            expect(response.body.error).toBe('Authentication Required');
+        });
+
+        test('Wrong token type (Bearer missing) should return 401', async () => 
+        {
+            const response = await request(app)
+                .get('/posts')
+                .set('Authorization', 'some-token')
+                .expect(401);
+            
+            expect(response.body.error).toBe('Authentication Required');
+        });
+
+        test('Expired token should return 403', async () => 
+        {
+            // This test requires waiting or mocking time
+            const loginResponse = await request(app)
+                .post('/login')
+                .send({ username: 'Nanna' })
+                .expect(200);
+            
+            const token = loginResponse.body.accessToken;
+            
+            // Wait for token to expire (30 seconds)
+            await new Promise(resolve => setTimeout(resolve, 31000));
+            
+            const response = await request(app)
+                .get('/posts')
+                .set('Authorization', `Bearer ${token}`)
+                .expect(403);
+            
+            expect(response.body.error).toBe('Token Expired');
+        }, 35000);
+    });
+
+    describe('Key Rotation Endpoint Errors', () => 
+    {
+        test('Invalid expiresInDays should use default', async () => 
+        {
+            const response = await request(app)
+                .post('/rotate-keys')
+                .send({ expiresInDays: 'invalid' })
+                .expect(200);
+            
+            expect(response.body.success).toBe(true);
+        });
+
+        test('Negative expiresInDays should be clamped to 1', async () => 
+        {
+            const response = await request(app)
+                .post('/rotate-keys')
+                .send({ expiresInDays: -5 })
+                .expect(200);
+            
+            expect(response.body.success).toBe(true);
+        });
+    });
+
+    describe('Non-existent Endpoints', () => 
+    {
+        test('GET /non-existent should return 404', async () => 
+        {
+            await request(app)
+                .get('/non-existent-endpoint')
+                .expect(404);
+        });
+
+        test('POST /non-existent should return 404', async () => 
+        {
+            await request(app)
+                .post('/api/unknown')
+                .send({ data: 'test' })
+                .expect(404);
+        });
     });
 });
