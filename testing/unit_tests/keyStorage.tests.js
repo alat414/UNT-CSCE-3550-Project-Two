@@ -317,7 +317,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 PEM', () =>
             expect(keyData.isActive).toBe(0);
         });
         
-        test('deactivating the key should promote the next key', async () =>
+        test('deactivating a key should promote the next key', async () =>
         {
             const keyIDOne = await keyStorage.generateNewKey(1);
             const keyIDTwo = await keyStorage.generateNewKey(1);
