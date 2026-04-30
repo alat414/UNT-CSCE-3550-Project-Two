@@ -228,8 +228,6 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
             expect(response.body).toHaveProperty('error', 'Server configuration error - No key available');
         });
 
-    
-
         test('should return 500 when key is expired', async () =>
         {
             keyStorage.getKeyData.mockResolvedValueOnce(  
@@ -245,8 +243,6 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
 
             expect(response.body).toHaveProperty('error', 'Key rotation in progress - please try again');
         });
-
-        
 
         test('should return 500 when REFRESH_TOKEN_SECRET is not set', async () =>
         {
@@ -442,7 +438,7 @@ describe('keyExpiry.js - Comprehensive Tests', () =>
                 .get('/key-status')
                 .expect(500);
 
-            expect(response.body).toHaveProperty('error', 'Internal server Error');
+            expect(response.body).toHaveProperty('error', 'Internal server error');
         });
 
     });
