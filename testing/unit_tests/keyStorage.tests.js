@@ -141,7 +141,7 @@ describe('KeyStorage Unit tests - RSA PKCS1 PEM', () =>
         test('getPrivateKey should return valid private key for given keyID', async () =>
         {
             const keyID = await keyStorage.generateNewKey(1);
-            const keyData = await keyStorage.getPrivateKey(keyID);
+            const privateKey = await keyStorage.getPrivateKey(keyID);
             expect(privateKey).toBeDefined();
             expect(privateKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
 
