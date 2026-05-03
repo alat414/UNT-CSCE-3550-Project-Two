@@ -393,9 +393,39 @@ class keyStorage
             throw err;
         }
     }
+
+    /* *************************************************
+    * This function is the AES Decrypter helper
+
+    * @param  key : AES key (Buffer)
+    * @param  encryptedData : cipher text
+    * @return : Decrypted plaintext string
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    async decrypt(key, encryptedData)
+    {
+        try 
+        {
+            const decoded = JSON.parse(Buffer.from(encryptedData, 'base64').toString());
+
+            const initializationVector = crypto.randomBytes(12);
+            const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(decoded.initializationVector, 'base64'));
+
+            decipher.setAuthTag(Buffer.from(decoded.authTag, 'base64'));
+
+            let decrypted = decipher.update(decoded.data ,'base64', 'utf8');
+            dencrypted += decipher.final('utf8');
+
+            return decrypted;
+        } 
+        catch (err) 
+        {
+            console.error('Encryption error:', err.message);
+            throw err;
+        }
+    }
 }
-
-
 
 // Export a singleton instance.
 module.exports = new keyStorage();
