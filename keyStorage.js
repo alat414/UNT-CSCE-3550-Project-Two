@@ -187,68 +187,26 @@ class keyStorage
         }
     }
 
-    /* **********************************
-    * Obtain a key from the database.
-    * @param keyID - key ID for retrieving
-    * @param callback - key ID for retrieving
-    * @return secret - The key secret or null if expired or invalid.
-    ********************************** */
-    async getPublicKey(keyID)
-    {
-        try 
-        {
-            const row = await dbGet(`SELECT publicKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
-            {
-                if(!row)
-                {
-                    console.log(`Key ${keyID} not found`);
-                    return null;
-                }
-
-                const now = new Date();
-                const expiresIn = new Date(row.expiresIn);
-
-                if (now > expiresIn)
-                {
-                    console.log(`Key ${keyID} is expired`);
-                    return null;
-                }
-
-                if (!row.isActive)
-                {
-                    console.log(`Key ${keyID} is inactive`);
-                    return null;
-                }
-
-                console.log(`Retrieved public key for ${keyID} (PKCS1 PEM format)`)
-                return row.publicKey;
-            };
-        } 
-        catch (err) 
-        {
-            console.error(`Error retrieving public key ${keyID}:`, err.message);
-            return null;
-        }
-    }
+    
 
     /* *************************************************
     * This function returns the current, active
-    * private key via the getPrivatekey method. 
+    *  key via the getKey method. 
     * 
     * @param  : none
-    * @return : The active private key or null if no key exists.
+    * @return : The active AES key or null if no key exists.
     * @exception : none
     * @note : na
     * ************************************************* */
-    async getCurrentPrivateKey()
+    async getCurrentKey()
     {
-        console.log(`Getting current, private key. Active key ID: ${this.activeKeyID}`);
+        console.log(`Getting current AES key. Active key ID: ${this.activeKeyID}`);
         if (!this.activeKeyID)
         {
             console.log('No active keyID set');
             return null;
         }
-        const key = await this.getPrivateKey(this.activeKeyID);
+        const key = await this.getKey(this.activeKeyID);
         console.log(`Key Found: ${!!key}`);
         return key;
     }
