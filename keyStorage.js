@@ -65,7 +65,7 @@ class keyStorage
     }
 
     /* **********************************
-    * Generate a new encryption RSA pair keys;
+    * Generate a new pair of AES encryption keys
     * passing the new key in PKCS1 PEM format
     * to the database saved. 
     * @param expiresInDays - Number of days until key expiration
@@ -76,11 +76,71 @@ class keyStorage
         try 
         {
             const days = Math.max(1, Math.min(30, expiresInDays));
+            const key = await crypto.subtle.generateKey(
+                {
+                    name: 'AES-GCM',
+                    length: 256
+                },
+                true,
+                [
+                    "encrypt", "decrypt",
+                ]
+            );
+
+            const rowKey = await crypto.subtle.exportKey("row", key);
+            const rowKey = base64_decode("bXv+JNZXLMj..");
+            
+            const key = await crypto.subtle.importKey(
+                "raw",
+                rawKey,
+                {
+                    name: 'AES-GCM',
+                    length: 256
+                },
+                true,
+                [
+                    "encrypt", "decrypt",
+                ]
+            );
+
             const keyID = `rsa-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
 
-            const key = new NodeRSA({ b: 2048 });
-            const privateKeyPem = key.exportKey('pkcs1-private-pem');
-            const publicKeyPem = key.exportKey('pkcs1-public-pem');
+            const SIGN_PARAMETERS = {
+                name: "RSASSA-PKCS1-v1_5",
+                modulusLength: 4096,
+                publicExponent: new Uint8Array([1, 0, 1]), 
+                hash: "SHA-256"
+            }
+
+            const privateKey = await crypto.subtle.importKey(
+                "pkcs8",
+                privateKeyBytes,
+                SIGN_PARAMETERS,
+                true,
+                ["sign"]
+            );
+            
+            const publicKey = await crypto.subtle.importKey(
+                "spki",
+                publicKeyBytes,
+                SIGN_PARAMETERS,
+                true,
+                ["verify"]
+            );
+            const message = new TextEncoder().encode('hello world');
+
+            const signature = await crypto.subtle.sign(
+                "RSASSA-PKCS1-v1_5",
+                privateKey,
+                message
+            );
+
+            const verify = await crypto.subtle.verify(
+                "RSASSA-PKCS1-v1_5",
+                publicKey,
+                signature,
+                message
+            );
 
             const createdAt = new Date().toISOString();
             const expiresIn = new Date();
@@ -120,6 +180,58 @@ class keyStorage
             console.error('Full error object:', err);
             throw err;
         }
+    }
+
+    /* **********************************
+    * The function generates an initialization
+    * vector for the AES encryption
+    * @param keyID - key ID for retrieving
+    * @param keyID - key ID for retrieving
+    * @return - None
+    ********************************** */
+    async function aesEncrypt(key: CryptoKey, message: ArrayBuffer)
+    {
+        const initializationVector = new Uint8Array(12);
+        crypto.getRandomValues(initializationVector);
+
+        const aesData = await crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: initializationVector
+            },
+            key,
+            message,
+        );
+        
+        const cipherText = new Uint8Array(initializationVector.length + aesData.byteLength);
+        cipherText.set(initializationVector, 0);
+        cipherText.set(new Uint8Array(aesData), initializationVector.length);
+        return cipherText;
+    }
+
+    /* **********************************
+    * The function generates an initialization
+    * vector for the AES encryption
+    * @param keyID - key ID for retrieving
+    * @param keyID - key ID for retrieving
+    * @return - None
+    ********************************** */
+    async function aesDecrypt(key: CryptoKey, message: ArrayBuffer)
+    {
+        const initializationVector = cipherText.slice(0, 12);
+
+        const aesData = cipherText.slice(12);
+
+        const plainText = await crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: initializationVector
+            },
+            key,
+            aesData,
+        );
+    
+        return plainText;
     }
 
     /* **********************************
