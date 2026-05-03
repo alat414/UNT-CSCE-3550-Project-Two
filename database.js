@@ -13,20 +13,7 @@ console.log(`Connecting to SQLite database at: ${dbPath}`);
 
 const db = new sqlite3.Database(dbPath);
 
-let tableReady = false;
-const readyCallBacks = [];
 
-function onTableReady(callback)
-{
-    if (tableReady)
-    {
-        callback();
-    }
-    else
-    {
-        readyCallBacks.push(callback);
-    }
-}
 // Create table immediately
 db.serialize(() => {
     //Remove any existing tables.
@@ -41,8 +28,7 @@ db.serialize(() => {
         }
         db.run(`CREATE TABLE IF NOT EXISTS keys (
             kid TEXT PRIMARY KEY,
-            privateKey TEXT NOT NULL,
-            publicKey TEXT NOT NULL,
+            secretKey TEXT NOT NULL,
             createdAt TEXT NOT NULL,
             expiresIn TEXT NOT NULL,
             isActive INTEGER NOT NULL DEFAULT 1
@@ -54,9 +40,7 @@ db.serialize(() => {
             } 
             else 
             {
-                console.log('RSA keys table created successfully with private and public key columns');
-                readyCallBacks.forEach(cb => cb());
-                readyCallBacks.length = 0;
+                console.log('AES keys table created successfully ');
             }
         });
     });
@@ -73,4 +57,4 @@ process.on('SIGINT', () => {
     db.close();
 });
 
-module.exports = {db, onTableReady};
+module.exports = {db, onTableReady: (cb) => cb() };
