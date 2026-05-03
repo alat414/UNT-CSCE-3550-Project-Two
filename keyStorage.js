@@ -211,27 +211,7 @@ class keyStorage
         return key;
     }
 
-    /* *************************************************
-    * This function returns the current, active public key
-    * via the getpublickey method. 
-    * 
-    * @param  : none
-    * @return : The active, public key or null if no key exists.
-    * @exception : none
-    * @note : na
-    * ************************************************* */
-    async getCurrentPublicKey()
-    {
-        console.log(`Getting current public key. Active key ID: ${this.activeKeyID}`);
-        if (!this.activeKeyID)
-        {
-            console.log('No active keyID set');
-            return null;
-        }
-        const key = await this.getPublicKey(this.activeKeyID);
-        console.log(`Key Found: ${!!key}`);
-        return key;
-    }
+    
     /* *************************************************
     * This function returns the current active key ID
 
@@ -260,7 +240,7 @@ class keyStorage
         {
             const result = await dbRun(`DELETE FROM keys WHERE datetime(expiresIn) <= datetime('now')`);
             const count = result.changes || 0;
-            console.log(`Removed ${count} expired keys`);
+            console.log(`Removed ${count} expired AES keys`);
             return count;
         } 
         catch (error) 
@@ -276,64 +256,27 @@ class keyStorage
     * @param  callback: function used to backtrack
     * @return : Array of active key metadata
     * @exception : none
-    * @note : na
+    * @note : For AES, JWKS uses 'oct' key type.
     * ************************************************* */
     async getActiveKeys()
     {
         try 
         {
-            /*
-            console.log('=== getActiveKeys() called ===');
-            
-            // First, check total keys in database
-            const totalKeys = await dbAll(`SELECT COUNT(*) as count FROM keys`);
-            console.log(`Total keys in database: ${totalKeys[0].count}`);
-            
-            // Check all keys with their status
-            const allKeysStatus = await dbAll(`SELECT kid, isActive, expiresIn, datetime('now') as now FROM keys`);
-            console.log('All keys in database:', allKeysStatus.map(k => ({
-                kid: k.kid,
-                isActive: k.isActive,
-                expiresIn: k.expiresIn,
-                now: k.now,
-                isExpired: new Date(k.expiresIn) <= new Date()
-            })));
-            */
-            
             const rows = await dbAll(`
-                SELECT kid, expiresIn, publicKey FROM keys 
+                SELECT kid, expiresIn FROM keys 
                 WHERE isActive = 1 AND datetime(expiresIn) > datetime('now')
             `);
             
-            console.log(`Query returned ${rows.length} active, non-expired keys`);
+            console.log(`Query returned ${rows.length} active, non-expired AES keys`);
             
-            const activeKeys = [];
-
-            for (const row of rows)
-            {
-                console.log(`Processing key: ${row.kid}`);
-                try 
-                {
-                    const publicKey = crypto.createPublicKey(row.publicKey);
-                    const jwk = publicKey.export({ format: 'jwk'});
-                    
-                    activeKeys.push({
-                        kid: row.kid,
-                        kty: "RSA",
-                        alg: "RS256",
-                        use: "sig",
-                        n: jwk.n,
-                        e: jwk.e,
-                        exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
-                    });
-
-                    console.log(`Successfully parsed key ${row.kid}`);
-                } 
-                catch (err) 
-                {
-                    console.error(`Error parsing key ${row.kid}:`, parseError.message);
-                }
-            }
+            const activeKeys = rows.map(row => 
+            ({
+                kid: row.kid,
+                kty: "oct",
+                alg: "HS256",
+                use: "sig",
+                exp: Math.floor(new Date(row.expiresIn).getTime() / 1000)
+            }));
             
             console.log(`Found ${activeKeys.length} active keys for JWKS server`);
             return activeKeys;
