@@ -65,100 +65,36 @@ class keyStorage
     }
 
     /* **********************************
-    * Generate a new pair of AES encryption keys
-    * passing the new key in PKCS1 PEM format
+    * Generate a new AES encryption key
+    * via the randomBytes function and passing
     * to the database saved. 
     * @param expiresInDays - Number of days until key expiration
-    * @return - Generated key ID
+    * @return - Generated AES key ID
     ********************************** */
     async generateNewKey(expiresInDays = 1) 
     {
         try 
         {
             const days = Math.max(1, Math.min(30, expiresInDays));
-            
-            const key = await crypto.subtle.generateKey(
-                {
-                    name: 'AES-GCM',
-                    length: 256
-                },
-                true,
-                [
-                    "encrypt", "decrypt",
-                ]
-            );
+            const keyID = `aes-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
 
-            const rowKey = await crypto.subtle.exportKey("row", key);
-            const rowKey = base64_decode("bXv+JNZXLMj..");
-            
-            const key = await crypto.subtle.importKey(
-                "raw",
-                rawKey,
-                {
-                    name: 'AES-GCM',
-                    length: 256
-                },
-                true,
-                [
-                    "encrypt", "decrypt",
-                ]
-            );
-
-            const keyID = `rsa-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
-
-            const SIGN_PARAMETERS = {
-                name: "RSASSA-PKCS1-v1_5",
-                modulusLength: 4096,
-                publicExponent: new Uint8Array([1, 0, 1]), 
-                hash: "SHA-256"
-            }
-
-            const privateKey = await crypto.subtle.importKey(
-                "pkcs8",
-                privateKeyBytes,
-                SIGN_PARAMETERS,
-                true,
-                ["sign"]
-            );
-
-            const publicKey = await crypto.subtle.importKey(
-                "spki",
-                publicKeyBytes,
-                SIGN_PARAMETERS,
-                true,
-                ["verify"]
-            );
-            const message = new TextEncoder().encode('hello world');
-
-            const signature = await crypto.subtle.sign(
-                "RSASSA-PKCS1-v1_5",
-                privateKey,
-                message
-            );
-
-            const verify = await crypto.subtle.verify(
-                "RSASSA-PKCS1-v1_5",
-                publicKey,
-                signature,
-                message
-            );
+            const aesKey =  crypto.randomBytes(32);
+            const aesKeyBase64 = aesKey.toString('base64');
 
             const createdAt = new Date().toISOString();
             const expiresIn = new Date();
             expiresIn.setDate(expiresIn.getDate() + days);
             
             console.log(`Generating new AES key with ID: ${keyID}`);
-            console.log(`Private key (PCKS1 PEM): ${privateKeyPem.substring(0, 60)}...`);
-            console.log(`Public key (PCKS1 PEM): ${publicKeyPem.substring(0, 60)}...`);
             console.log(`Created at: ${createdAt}`);
             console.log(`Expires at: ${expiresIn.toISOString()}`);
-            
+
             // Insert into database - FIXED parameter order
             const query = `
-                INSERT INTO keys (kid, privateKey, publicKey, createdAt, expiresIn, isActive)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO keys (kid, secretKey, createdAt, expiresIn, isActive)
+                VALUES (?, ?, ?, ?, ?)
             `;
-            
+
             const params = [
                 keyID,                    // kid
                 privateKeyPem,            // private key
@@ -171,13 +107,13 @@ class keyStorage
             console.log('Executing INSERT query...');
             await dbRun(query, params);
             
-            console.log(`Successfully saved RSA key pair to database: ${keyID}`);
+            console.log(`Successfully saved AES key to database: ${keyID}`);
             await this.setActiveKey(keyID);
             return keyID;
         } 
         catch (err) 
         {
-            console.error('Error saving key to database:', err.message);
+            console.error('Error saving AES key to database:', err.message);
             console.error('Full error object:', err);
             throw err;
         }
