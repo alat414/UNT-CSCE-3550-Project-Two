@@ -119,7 +119,7 @@ class keyStorage
                 true,
                 ["sign"]
             );
-            
+
             const publicKey = await crypto.subtle.importKey(
                 "spki",
                 publicKeyBytes,
@@ -146,7 +146,7 @@ class keyStorage
             const expiresIn = new Date();
             expiresIn.setDate(expiresIn.getDate() + days);
             
-            console.log(`Generating new RSA key with ID: ${keyID}`);
+            console.log(`Generating new AES key with ID: ${keyID}`);
             console.log(`Private key (PCKS1 PEM): ${privateKeyPem.substring(0, 60)}...`);
             console.log(`Public key (PCKS1 PEM): ${publicKeyPem.substring(0, 60)}...`);
             console.log(`Created at: ${createdAt}`);
