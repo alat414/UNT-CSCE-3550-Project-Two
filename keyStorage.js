@@ -120,58 +120,6 @@ class keyStorage
     }
 
     /* **********************************
-    * The function generates an initialization
-    * vector for the AES encryption
-    * @param keyID - key ID for retrieving
-    * @param keyID - key ID for retrieving
-    * @return - None
-    ********************************** */
-    async function aesEncrypt(key: CryptoKey, message: ArrayBuffer)
-    {
-        const initializationVector = new Uint8Array(12);
-        crypto.getRandomValues(initializationVector);
-
-        const aesData = await crypto.subtle.encrypt(
-            {
-                name: "AES-GCM",
-                iv: initializationVector
-            },
-            key,
-            message,
-        );
-        
-        const cipherText = new Uint8Array(initializationVector.length + aesData.byteLength);
-        cipherText.set(initializationVector, 0);
-        cipherText.set(new Uint8Array(aesData), initializationVector.length);
-        return cipherText;
-    }
-
-    /* **********************************
-    * The function generates an initialization
-    * vector for the AES encryption
-    * @param keyID - key ID for retrieving
-    * @param keyID - key ID for retrieving
-    * @return - None
-    ********************************** */
-    async function aesDecrypt(key: CryptoKey, message: ArrayBuffer)
-    {
-        const initializationVector = cipherText.slice(0, 12);
-
-        const aesData = cipherText.slice(12);
-
-        const plainText = await crypto.subtle.decrypt(
-            {
-                name: "AES-GCM",
-                iv: initializationVector
-            },
-            key,
-            aesData,
-        );
-    
-        return plainText;
-    }
-
-    /* **********************************
     * The function sets the key as an active key
     * @param keyID - key ID for retrieving
     * @return - None
@@ -200,37 +148,37 @@ class keyStorage
     * @param callback - key ID for retrieving
     * @return secret - The private key or null if expired or invalid.
     ********************************** */
-    async getPrivateKey(keyID)
+    async getKey(keyID)
     {
         try 
         {
-            const row = await dbGet(`SELECT privateKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
+            const row = await dbGet(`SELECT secretKey, isActive, expiresIn FROM keys WHERE kid = ?`, [keyID]);
+            
+            if(!row)
             {
-                if(!row)
-                {
-                    console.log(`Key ${keyID} not found`);
-                    return null;
-                }
+                console.log(`Key ${keyID} not found`);
+                return null;
+            }
 
-                const now = new Date();
-                const expiresIn = new Date(row.expiresIn);
+            const now = new Date();
+            const expiresIn = new Date(row.expiresIn);
 
-                if (now > expiresIn)
-                {
-                    console.log(`Key ${keyID} is expired`);
-                    await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID])
-                    return null;
-                }
+            if (now > expiresIn)
+            {
+                console.log(`Key ${keyID} is expired`);
+                await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID])
+                return null;
+            }
 
-                if (!row.isActive)
-                {
-                    console.log(`Key ${keyID} is inactive`);
-                    return null;
-                }
-
-                console.log(`Retrieved private key for ${keyID} (PKCS1 PEM format)`)
-                return row.privateKey;
-            };
+            if (!row.isActive)
+            {
+                console.log(`Key ${keyID} is inactive`);
+                return null;
+            }
+            const keyBuffer = Buffer.from(row.secretKey, 'base64');
+            console.log(`Retrieved AES key for ${keyID} (${keyBuffer.length} bytes)`);
+            return keyBuffer;
+            
         } 
         catch (err) 
         {
