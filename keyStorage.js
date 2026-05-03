@@ -7,7 +7,7 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const { db, onTableReady } = require('./database');
-const NodeRSA = require('node-rsa');
+
 
 const dbGet = promisify(db.get).bind(db);
 const dbRun = promisify(db.run).bind(db);
@@ -35,7 +35,7 @@ class keyStorage
     {
         try 
         {
-            console.log('Loading active key from database...'); 
+            console.log('Loading active AES key from database...'); 
             const row = await dbGet(`
                 SELECT kid FROM keys 
                 WHERE isActive = 1 AND datetime(expiresIn) > datetime('now') 
@@ -45,7 +45,7 @@ class keyStorage
             if (row) 
             {
                 this.activeKeyID = row.kid;
-                console.log(`Loaded active key from database: ${this.activeKeyID}`);
+                console.log(`Loaded active AES key from database: ${this.activeKeyID}`);
             } 
             else 
             {
@@ -76,6 +76,7 @@ class keyStorage
         try 
         {
             const days = Math.max(1, Math.min(30, expiresInDays));
+            
             const key = await crypto.subtle.generateKey(
                 {
                     name: 'AES-GCM',
