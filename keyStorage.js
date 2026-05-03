@@ -358,6 +358,41 @@ class keyStorage
             return [];
         }
     }
+
+    /* *************************************************
+    * This function is the AES Encryption helper
+
+    * @param  key : AES key (Buffer)
+    * @param  text : Plain text to encrypt
+    * @return : Encrypted data as a base64 string
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    async encrypt(key, text)
+    {
+        try 
+        {
+            const initializationVector = crypto.randomBytes(12);
+            const cipher = crypto.createCipheriv('aes-256-gcm', key, initializationVector);
+
+            let encrypted = cipher.update(text, 'utf8', 'base64');
+            encrypted += cipher.final('base64');
+
+            const authTag = cipher.getAuthTag();
+
+            const result = {
+                iv: initializationVector.toString('base64'),
+                authTag: authTag.toString('base64'),
+                data: encrypted
+            }
+            return Buffer.from(JSON.stringify(result)).toString('base64');
+        } 
+        catch (err) 
+        {
+            console.error('Encryption error:', err.message);
+            throw err;
+        }
+    }
 }
 
 
