@@ -289,6 +289,34 @@ class keyStorage
     }
 
     /* *************************************************
+    * This function deactivates specific key using
+    * SQL prompts and promoteNextKey call
+    *
+    * @param  keyID: kid
+    * @return : none
+    * @exception : none
+    * @note : na
+    * ************************************************* */
+    async deactivateKey(keyID)
+    {
+        try 
+        {
+            await dbRun(`UPDATE keys SET isActive = 0 WHERE kid = ?`, [keyID]);
+            console.log(`Key ${keyID} deactivated`);
+
+            if (keyID === this.activeKeyID)
+            {
+                await this.promoteNextKey();
+            }            
+        } 
+        catch (err) 
+        {
+            console.error(`Error deactivating key ${keyID}:`, err.message);
+            throw err;
+        }
+    }
+
+    /* *************************************************
     * This function gets all key data via SQL query prompt
 
     * @param  keyID: kid
