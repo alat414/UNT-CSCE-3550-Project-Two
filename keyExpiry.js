@@ -31,8 +31,6 @@ async function startServer()
     {
         console.log('Waiting for keyStorage to initialize...');
         await new Promise(resolve => setTimeout(resolve, 100));
-
-        
     }
 
     if (!serverStarted)
@@ -123,7 +121,7 @@ app.post('/token', async (req, res) =>
                 }
             });
         });
-        const aesKey = await keyStorage.getCurrentKey();
+        const currentKey = await keyStorage.getCurrentKey();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
         if(!currentKey || !currentKeyID)
@@ -166,7 +164,7 @@ app.post('/token', async (req, res) =>
     }
     catch (err) 
     {
-        console.log('Token refresh failed: Invalid refresh token');
+        console.log('Token refresh failed', err.message);
         res.status(403).json({ error: 'Invalid refresh token' });
     } 
 });
@@ -302,7 +300,7 @@ app.post('/rotate-keys', async (req, res) =>
         const days = req.body.expiresInDays || 1;
         
         const newKeyID = await keyStorage.generateNewKey(days);
-        console.log(`New keys generated: ${newKeyID}`);
+        console.log(`New AES keys generated: ${newKeyID}`);
 
         const cleanedCount = await keyStorage.removeExpiredKeys();
         console.log(`Cleaned up keys : ${cleanedCount}`);
@@ -348,15 +346,15 @@ app.get('/key-status', async (req, res) =>
         const now = new Date();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
-        const status = allKeys.map(key => ({
+        const status = allKeys.map(key => 
+        ({
             kid: key.kid,
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
             isActive: key.isActive === 1,
-            isCurrent: key.kid === keyStorage.getCurrentKeyID,
+            isCurrent: key.kid === currentKeyID,
             expired: now > new Date(key.expiresIn),
             timeToExpiry: new Date(key.expiresIn) - now
-
         }));
 
         res.json(status);
@@ -393,7 +391,8 @@ app.get('/health', async (req, res) =>
             keyCount: allKeys.length,
             activeKeyValid: activeKeyData ? new Date() <= new Date(activeKeyData.expiresIn) : false,
             uptime: process.uptime(),
-            database: 'SQLite (jwks-server.db)'
+            database: 'SQLite (jwks-server.db)',
+            encryption: 'AES-256-GCM'
         });
         
     } 
@@ -402,7 +401,6 @@ app.get('/health', async (req, res) =>
         console.error('Health check error:', error);
         res.status(500).json({ status: 'Error', error: error.message});
     }
-    ;
 });
 
 /* *************************************************
@@ -419,26 +417,17 @@ app.get('/debug-key-status', async (req, res) =>
 {
     try 
     {
-        const { db } = require('./database');
-        
-        // Get all keys
-        const allKeys = await new Promise((resolve, reject) => {
-            db.all("SELECT * FROM keys", (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
+        const allKeys = await keyStorage.getAllKeys();
         
         const now = new Date();
         
-        const keyInfo = allKeys.map(key => ({
+        const keyInfo = allKeys.map(key => 
+        ({
             kid: key.kid,
             isActive: key.isActive === 1,
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
-            isExpired: new Date(key.expiresIn) <= now,
-            aesKeyLength: key.aesKey ? key.aesKey.length : 0
-            
+            isExpired: new Date(key.expiresIn) <= now
         }));
         
         res.json({
@@ -450,6 +439,7 @@ app.get('/debug-key-status', async (req, res) =>
     } 
     catch (error) 
     {
+        console.error('Debug key status error:', error);
         res.status(500).json({ error: error.message });
     }
 });
