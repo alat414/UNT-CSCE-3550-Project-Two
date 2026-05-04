@@ -123,7 +123,7 @@ app.post('/token', async (req, res) =>
                 }
             });
         });
-        const privateKey = await keyStorage.getCurrentKey();
+        const aesKey = await keyStorage.getCurrentKey();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
         if(!currentKey || !currentKeyID)
