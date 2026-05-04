@@ -191,15 +191,24 @@ function authenticateToken(req, res, next)
 }
 
 /* *************************************************
-* Helper function to create posts filtered by username
+* Helper function to verify user's permissions
 
-* @param username : The username input used for filtering
-* @return : Posts by the user
+* @param req : request
+* @param res : response
+* @param next : next function
+* @return : error message
 * @note : na
 * ************************************************* */
-function getUserPosts(username)
+function requireUser(req, res, next)
 {
-    return posts.filter(post => post.username.toLowerCase() === username.toLowerCase());
+    if (!req.user)
+    {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'User not authenticated'
+        });
+    }
+    next();
 }
 
 /* *************************************************
