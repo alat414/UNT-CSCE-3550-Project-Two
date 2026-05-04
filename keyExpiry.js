@@ -123,7 +123,7 @@ app.post('/token', async (req, res) =>
                 }
             });
         });
-        const privateKey = await keyStorage.getCurrentPrivateKey();
+        const privateKey = await keyStorage.getCurrentKey();
         const currentKeyID = keyStorage.getCurrentKeyID();
 
         if(!currentKey || !currentKeyID)
@@ -208,10 +208,10 @@ app.post('/login', async (req, res) =>
 
     try 
     {
-        const privateKey = await keyStorage.getCurrentPrivateKey();
+        const aesKey = await keyStorage.getCurrentKey();
         const activeKeyID = keyStorage.getCurrentKeyID();
         
-        if(!privateKey || !activeKeyID)
+        if(!aesKey || !activeKeyID)
         {
             console.error('Login failed: No active key available');
             return res.status(500).json({ error: 'Server configuration error - No key available' });
@@ -227,14 +227,14 @@ app.post('/login', async (req, res) =>
         const accessToken = jwt.sign
         (
             user,
-            privateKey,
+            aesKey,
             {
                 expiresIn: '30s',
-                algorithm: 'RS256',
+                algorithm: 'HS256',
                 header: 
                 {
                     kid: activeKeyID,
-                    alg: 'RS256'
+                    alg: 'HS256'
                 }
             }
         );
@@ -255,7 +255,7 @@ app.post('/login', async (req, res) =>
             keyID: activeKeyID,
             keyExpiresIn: keyData.expiresIn,
             tokenExpiresIn: '30 seconds',
-            algorithm: 'RS256'
+            algorithm: 'HS256'
         });
 
     } 
@@ -437,8 +437,8 @@ app.get('/debug-key-status', async (req, res) =>
             createdAt: key.createdAt,
             expiresIn: key.expiresIn,
             isExpired: new Date(key.expiresIn) <= now,
-            publicKeyLength: key.publicKey ? key.publicKey.length : 0,
-            privateKeyLength: key.privateKey ? key.privateKey.length : 0
+            aesKeyLength: key.aesKey ? key.aesKey.length : 0
+            
         }));
         
         res.json({
