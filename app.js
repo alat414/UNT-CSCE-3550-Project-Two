@@ -3,6 +3,8 @@
 *  Assignment: JWKS Server with key id and token authentication.
 *  Purpose: A demonstration of a properly
 *           constructed and commented app.js
+*           showing all middleware and utilities
+*           for AES-256 JWT authentication. 
 ************************************************* */
 
 require('dotenv').config()
@@ -23,11 +25,11 @@ const keyStorage = require('./keyStorage');
 const posts = 
 [
     {
-        username: "Nanna",
+        username: "Nanna Bryndís Hilmarsdóttir",
         title: "lead singer"
     },
     {
-        username: "Raggi",
+        username: "Raggi Þórhallsson",
         title: "lead singer two"
     }
 
@@ -38,7 +40,7 @@ const posts =
 * This function accepts three parameter objects.
 * passes the token and auth header by value into 
 * the declared variables; the function validates the 
-* key ID, and verifies the signature
+* key ID, and verifies the signature using AES 256.
 
 * @param req : value passed by the request call
 * @param res : value passed by the response
@@ -61,6 +63,16 @@ function authenticateToken(req, res, next)
         });
     }
 
+    if (!token || !authHeader.startsWith('Bearer')) 
+    {
+        console.log('Authentication failed: Invalid Authorization header format');
+        return res.status(401).json
+        ({
+            error: 'Authentication Required',
+            message: 'Authorization header must use Bearer scheme'
+        });
+    }
+
     try 
     {
         const decodedHeader = jwt.decode(token, { complete: true });
@@ -70,7 +82,7 @@ function authenticateToken(req, res, next)
             console.log('Authentication failed: Invalid token format');
             return res.status(401).json({ 
                 error: 'Invalid token',
-                message: 'Token cannot be decoded' 
+                message: 'Token cannot be decoded - malformed JWT' 
             });
         }
 
@@ -79,7 +91,16 @@ function authenticateToken(req, res, next)
             console.log('Authentication failed: No key ID in the token header');
             return res.status(401).json({ 
                 error: 'Invalid token structure',
-                message: 'Token missing key ID (kid) in header' 
+                message: 'Token missing key ID (kid) in header. Get a new token.' 
+            });
+        }
+        
+        if (!decodedHeader.header.alg !== 'HS256') 
+        {
+            console.log(`Authentication failed: Invalid algorithm ${decodedHeader.header.alg}`);
+            return res.status(401).json({ 
+                error: 'Invalid token structure',
+                message: 'Only HS256 algorithm is supported' 
             });
         }
 
@@ -99,7 +120,10 @@ function authenticateToken(req, res, next)
                 });
             }
             
-            jwt.verify(token, keyBuffer, { algorithms: ['HS256'] } ,(err, user) => 
+            jwt.verify(token, keyBuffer, { 
+                algorithms: ['HS256']  ,
+                maxAge: '30s'
+            },  (err, user) => 
             {
                 if (err) 
                 {
@@ -123,11 +147,21 @@ function authenticateToken(req, res, next)
                         });
                     }
 
+                    if (err.name === 'NotBeforeError') 
+                    {
+                        console.log(`Authentication failed: Token not yet active for key ${keyID}`);
+                        return res.status(403).json
+                        ({ 
+                            error: 'Token Not Active',
+                            message: 'Token not yet active. Please check your system time.'
+                        });
+                    }
+
                     console.log(`Authentication failed: ${err.message}`);
                     return res.status(403).json
                     ({ 
                         error: 'Token Verification Failed',
-                        message: err.message
+                        message: 'Unable to verify token. Please try logging in again.'
                     });
                 }
                 
@@ -138,7 +172,10 @@ function authenticateToken(req, res, next)
         }).catch(error => 
         {
             console.error('AES key lookup error:', error);
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).json({ 
+                error: 'Internal server error',
+                message: 'Error retrieving encryption key. Please try again later.'
+            });
         });
         
     } 
@@ -148,7 +185,7 @@ function authenticateToken(req, res, next)
         return res.status(500).json
         ({ 
             error: 'Internal Server Error',
-            message: 'Error processing authentication'
+            message: 'Error processing authentication. Please try again.'
         });
     }
 }
@@ -164,6 +201,19 @@ function getUserPosts(username)
 {
     return posts.filter(post => post.username.toLowerCase() === username.toLowerCase());
 }
+
+/* *************************************************
+* Helper function to create posts filtered by username
+
+* @param username : The username input used for filtering
+* @return : Posts by the user
+* @note : na
+* ************************************************* */
+function getUserPosts(username)
+{
+    return posts.filter(post => post.username.toLowerCase() === username.toLowerCase());
+}
+
 
 
 /* *************************************************
