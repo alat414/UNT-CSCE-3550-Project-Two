@@ -97,8 +97,7 @@ class keyStorage
 
             const params = [
                 keyID,                    // kid
-                privateKeyPem,            // private key
-                publicKeyPem,             // public key
+                aesKeyBase64,             // public key
                 createdAt,                // createdAt
                 expiresIn.toISOString(),  // expiresIn
                 1                         // isActive
