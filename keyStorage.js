@@ -97,7 +97,7 @@ class keyStorage
 
             const params = [
                 keyID,                    // kid
-                aesKeyBase64,             // public key
+                aesKeyBase64,             // aes key
                 createdAt,                // createdAt
                 expiresIn.toISOString(),  // expiresIn
                 1                         // isActive
@@ -140,7 +140,7 @@ class keyStorage
         }       
     }
     /* **********************************
-    * Obtain a public key from the database.
+    * Obtain a key from the database.
     * using SQL query prompts.
     * 
     * @param keyID - key ID for retrieving
